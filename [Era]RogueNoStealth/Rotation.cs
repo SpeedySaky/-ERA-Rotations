@@ -208,7 +208,7 @@ public class RogueNoStealth : Rotation
             if (Api.Spellbook.Cast("Blade Flurry"))
                 return true;
         }
-        if (Api.Spellbook.HasSpell("Rupture") && points >= 2 && !target.Auras.Contains("Rupture") && energy >= 25)
+        if (Api.Spellbook.HasSpell("Rupture") && points >= 2 && !target.Auras.Contains("Rupture",true) && energy >= 25)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Casting Rupture ");
@@ -217,7 +217,7 @@ public class RogueNoStealth : Rotation
             if (Api.Spellbook.Cast("Rupture"))
                 return true;
         }
-        if (Api.Spellbook.HasSpell("Slice and Dice") && points >= 2 && !me.Auras.Contains("Slice and Dice") && energy >= 25)
+        if (Api.Spellbook.HasSpell("Slice and Dice") && points >= 2 && !me.Auras.Contains("Slice and Dice",true) && energy >= 25)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Casting Slice and Dice ");

@@ -478,7 +478,7 @@ public class EraRetPala : Rotation
         }
 
 
-        if (Api.Spellbook.CanCast("Judgement") && mana > 15 && !Api.Spellbook.OnCooldown("Judgement") && (me.Auras.Contains("Seal of Righteousness") || me.Auras.Contains("Seal of Wisdom")))
+        if (Api.Spellbook.CanCast("Judgement") && mana > 15 && !Api.Spellbook.OnCooldown("Judgement") && (me.Auras.Contains("Seal of Righteousness") || me.Auras.Contains("Seal of Wisdom") || me.Auras.Contains("Seal of Command")))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Judgement");
