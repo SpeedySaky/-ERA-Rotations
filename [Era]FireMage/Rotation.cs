@@ -420,7 +420,7 @@ public class EraFireMage : Rotation
 
 
 
-        if (Api.Spellbook.CanCast("Scorch") && mana > 10)
+        if (Api.Spellbook.CanCast("Scorch") && mana > 50)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Scorch");
@@ -444,7 +444,7 @@ public class EraFireMage : Rotation
 
 
 
-        if (Api.Spellbook.CanCast("Fireball") && mana > 20)
+        if (Api.Spellbook.CanCast("Fireball") && mana > 50)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Fireball");
