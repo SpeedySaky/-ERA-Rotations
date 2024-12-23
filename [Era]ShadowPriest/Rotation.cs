@@ -308,7 +308,7 @@ public class EraShadowPriest : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Smite") && mana > 50 && !me.Auras.Contains("Shadowform", true))
+        if (Api.Spellbook.CanCast("Smite") && mana > 70 && !me.Auras.Contains("Shadowform", true))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Smite");

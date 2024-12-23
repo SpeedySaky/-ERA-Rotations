@@ -93,7 +93,7 @@ public class EraWarlock : Rotation
 
         if (me.IsValid())
         {
-            if (Api.Spellbook.CanCast("Demon Armor") && !me.Auras.Contains("Demon Armor",false))
+            if (Api.Spellbook.CanCast("Demon Armor") && !me.Auras.Contains("Demon Armor", true))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Demon Armor");
@@ -102,7 +102,7 @@ public class EraWarlock : Rotation
                 if (Api.Spellbook.Cast("Demon Armor"))
                     return true;
             }
-            if (Api.Spellbook.CanCast("Demon Skin") && !me.Auras.Contains("Demon Armor", false) && !me.Auras.Contains("Demon Skin", false))
+            if (Api.Spellbook.CanCast("Demon Skin") && (!me.Auras.Contains("Demon Armor", true) || !me.Auras.Contains("Demon Skin", true)))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Demon Skin");
