@@ -118,7 +118,7 @@ public class EraFireMage : Rotation
             // Add further actions if needed after conjuring water
             //}
             //}
-            if (Api.Spellbook.CanCast("Ice Armor") && !me.Auras.Contains("Ice Armor",true))
+            if (Api.Spellbook.CanCast("Ice Armor") && !me.Auras.Contains("Ice Armor", true))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Ice Armor");
@@ -128,7 +128,7 @@ public class EraFireMage : Rotation
                     return true;
             }
 
-            if (Api.Spellbook.CanCast("Frost Armor") && !me.Auras.Contains("Frost Armor",true) && !me.Auras.Contains("Ice Armor", true))
+            if (Api.Spellbook.CanCast("Frost Armor") && !me.Auras.Contains("Frost Armor", true) && !me.Auras.Contains("Ice Armor", true))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Frost Armor");
@@ -326,19 +326,20 @@ public class EraFireMage : Rotation
 
 
 
-
-        if (Api.Spellbook.CanCast("Frost Nova") && targetDistance <= 8 && !Api.Spellbook.OnCooldown("Frost Nova"))
+        if (targetDistance >= 6 && targetDistance <= 12)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Frost Nova");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Frost Nova"))
+            if (Api.Spellbook.CanCast("Frost Nova")  && !Api.Spellbook.OnCooldown("Frost Nova"))
             {
-                return true;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Casting Frost Nova");
+                Console.ResetColor();
+
+                if (Api.Spellbook.Cast("Frost Nova"))
+                {
+                    return true;
+                }
             }
         }
-
 
 
 
@@ -362,15 +363,7 @@ public class EraFireMage : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Frost Nova") && targetDistance <= 8 && !Api.Spellbook.OnCooldown("Frost Nova"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Frost Nova");
-            Console.ResetColor();
 
-            if (Api.Spellbook.Cast("Frost Nova"))
-                return true;
-        }
         if (Api.Spellbook.CanCast("Evocation") && !Api.Spellbook.OnCooldown("Evocation") && mana <= 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -405,7 +398,7 @@ public class EraFireMage : Rotation
         }
 
         // Offensive spells
-        if (Api.Spellbook.CanCast("Pyroblast") && !Api.Spellbook.OnCooldown("Pyroblast") && mana > 30)
+        if (Api.Spellbook.CanCast("Pyroblast") && !target.Auras.Contains("Pyroblast", true) && mana > 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Pyroblast");
@@ -454,18 +447,19 @@ public class EraFireMage : Rotation
                 return true;
             }
         }
-        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.HasMacro("Shoot") && !me.IsShooting())
+
+        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.Spellbook.CanCast("Shoot") && !me.IsShooting())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Ranged weapon is equipped. Attempting to cast Shoot.");
             Console.ResetColor();
 
-            if (Api.UseMacro("Shoot"))
+            if (Api.Spellbook.Cast("Shoot"))
             {
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
+    else if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && !me.IsShooting())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Attack");
