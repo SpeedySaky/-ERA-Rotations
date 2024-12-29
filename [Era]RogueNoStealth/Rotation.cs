@@ -187,7 +187,15 @@ public class RogueNoStealth : Rotation
                 return true;
             }
         }
+        if (Api.Spellbook.HasSpell("Slice and Dice") && points >= 2 && !me.Auras.Contains("Slice and Dice", true) && energy >= 25)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Casting Slice and Dice ");
+            Console.ResetColor();
 
+            if (Api.Spellbook.Cast("Slice and Dice"))
+                return true;
+        }
 
 
         if (Api.Spellbook.CanCast("Evasion") && Api.UnfriendlyUnitsNearby(5, true) >= 2 && !Api.Spellbook.OnCooldown("Evasion"))
@@ -217,15 +225,7 @@ public class RogueNoStealth : Rotation
             if (Api.Spellbook.Cast("Rupture"))
                 return true;
         }
-        if (Api.Spellbook.HasSpell("Slice and Dice") && points >= 2 && !me.Auras.Contains("Slice and Dice",true) && energy >= 25)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Casting Slice and Dice ");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Slice and Dice"))
-                return true;
-        }
+       
         if (Api.Spellbook.CanCast("Eviscerate") && points >= 3 && energy >= 35)
         {
             Console.ForegroundColor = ConsoleColor.Green;

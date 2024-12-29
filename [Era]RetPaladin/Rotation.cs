@@ -437,7 +437,7 @@ public class EraRetPala : Rotation
                 return true;
 
         }
-        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command"))
+        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && mana > 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Command");
@@ -445,7 +445,7 @@ public class EraRetPala : Rotation
             if (Api.Spellbook.Cast("Seal of Command"))
                 return true;
         }
-        if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !Api.Spellbook.OnCooldown("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 15)
+        if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !Api.Spellbook.OnCooldown("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana < 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Wisdom");
@@ -455,7 +455,7 @@ public class EraRetPala : Rotation
                 return true;
 
         }
-        else if (!me.Auras.Contains("Seal of Righteousness") && Api.Spellbook.CanCast("Seal of Righteousness") && !Api.Spellbook.OnCooldown("Seal of Righteousness") && !me.Auras.Contains("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 15)
+        else if (!me.Auras.Contains("Seal of Righteousness") && Api.Spellbook.CanCast("Seal of Righteousness") && !Api.Spellbook.OnCooldown("Seal of Righteousness") && !me.Auras.Contains("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Righteousness");

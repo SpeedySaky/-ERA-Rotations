@@ -4,7 +4,8 @@ using wShadow.Templates;
 using System.Collections.Generic;
 using wShadow.Warcraft.Classes;
 using wShadow.Warcraft.Defines;
-using wShadow.Warcraft.Managers;
+using wShadow.Warcraft.CombatLog;
+
 public class Warrior : Rotation
 {
 
@@ -67,7 +68,7 @@ public class Warrior : Rotation
         var me = Api.Player;
         var healthPercentage = me.HealthPercent;
         var target = Api.Target;
-        var rage = me.Rage/10;
+        var rage = me.Rage / 10;
 
 
 
@@ -89,7 +90,7 @@ public class Warrior : Rotation
      reaction != UnitReaction.Exalted) &&
      !IsNPC(target) && healthPercentage > 80)
             {
-                if (Api.Spellbook.CanCast("Charge")  && targetDistance > 8 && targetDistance < 25 && !Api.Spellbook.OnCooldown("Charge"))
+                if (Api.Spellbook.CanCast("Charge") && targetDistance > 8 && targetDistance < 25 && !Api.Spellbook.OnCooldown("Charge"))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Charge");
@@ -108,9 +109,11 @@ public class Warrior : Rotation
     {
         var me = Api.Player;
         var healthPercentage = me.HealthPercent;
-        var rage = me.Rage/10;
+        var rage = me.Rage / 10;
         var target = Api.Target;
         var targethealth = target.HealthPercent;
+        // Check for the DODGE event
+       
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
@@ -161,7 +164,7 @@ public class Warrior : Rotation
                 return true;
         }
 
-        
+
 
         if (Api.Spellbook.CanCast("Execute") && targethealth <= 20)
         {
@@ -173,7 +176,7 @@ public class Warrior : Rotation
                 return true;
         }
         CreatureType targetCreatureType = GetCreatureType(target);
-        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend",true) && rage >10 && targetCreatureType != CreatureType.Mechanical) 
+        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend", true) && rage > 10 && targetCreatureType != CreatureType.Mechanical)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Rend");
@@ -182,7 +185,7 @@ public class Warrior : Rotation
 
                 return true;
         }
-        if (Api.Spellbook.CanCast("Thunder Clap") && !target.Auras.Contains("Thunder Clap",true) && rage >20 && targethealth >= 30 && Api.UnfriendlyUnitsNearby(5, true) >= 2 )
+        if (Api.Spellbook.CanCast("Thunder Clap") && !target.Auras.Contains("Thunder Clap", true) && rage > 20 && targethealth >= 30 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Thunder Clap");
@@ -191,7 +194,7 @@ public class Warrior : Rotation
 
                 return true;
         }
-        if (Api.Spellbook.CanCast("Sunder Armor") && target.Auras.GetStacks("Sunder Armor") < 2)
+        if (Api.Spellbook.CanCast("Sunder Armor") && !target.Auras.Contains("Sunder Armor", true))//&& target.Auras.GetStacks("Sunder Armor",true) < 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Sunder Armor");
@@ -200,7 +203,7 @@ public class Warrior : Rotation
 
                 return true;
         }
-        if (!me.Auras.Contains("Battle Shout") && Api.Spellbook.CanCast("Battle Shout") && rage >10)
+        if (!me.Auras.Contains("Battle Shout") && Api.Spellbook.CanCast("Battle Shout") && rage > 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Battle Shout");
@@ -211,17 +214,17 @@ public class Warrior : Rotation
 
         }
 
-        if (Api.Spellbook.CanCast("Overpower") && rage >5 )
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Overpower");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Overpower"))
+        //if (target.DODGE() && Api.Spellbook.CanCast("Overpower") && rage > 5)
+        //{
+        //    Console.ForegroundColor = ConsoleColor.Green;
+        //    Console.WriteLine("Casting Overpower");
+        //    Console.ResetColor();
+        //    if (Api.Spellbook.Cast("Overpower"))
+        //        return true;
+        //}
+    
 
-                return true;
-
-        }
-        if (Api.Spellbook.CanCast("Heroic Strike") && rage>15)
+        if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Heroic Strike");
@@ -276,9 +279,9 @@ public class Warrior : Rotation
     {
         var me = Api.Player;
 
-        var rage = me.Rage/10;
+        var rage = me.Rage / 10;
         var healthPercentage = me.HealthPercent;
-       
+
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine($"{rage} Rage available");
         Console.WriteLine($"{healthPercentage}% Health available");
