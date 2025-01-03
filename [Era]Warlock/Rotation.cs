@@ -316,7 +316,15 @@ public class EraWarlock : Rotation
             if (Api.Spellbook.Cast("Drain Life"))
                 return true;
         }
+        if (Api.Spellbook.CanCast("Immolate") && !target.Auras.Contains("Immolate") && mana >= 10 && targethealth >= 30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Immolate");
+            Console.ResetColor();
 
+            if (Api.Spellbook.Cast("Immolate"))
+                return true;
+        }
         if (Api.Spellbook.CanCast("Curse of Agony") && !target.Auras.Contains("Curse of Agony") && mana >= 10 && targethealth >= 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
