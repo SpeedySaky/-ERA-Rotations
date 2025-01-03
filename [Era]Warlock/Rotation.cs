@@ -30,7 +30,14 @@ public class EraWarlock : Rotation
         }
         return true;
     }
-
+    private CreatureType GetCreatureType(WowUnit unit)
+    {
+        return unit.Info.GetCreatureType();
+    }
+    private bool HasEnchantment(EquipmentSlot slot, string enchantmentName)
+    {
+        return Api.Equipment.HasEnchantment(slot, enchantmentName);
+    }
     public override void Initialize()
     {
         // Can set min/max levels required for this rotation.
@@ -41,8 +48,8 @@ public class EraWarlock : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 1550;
-        FastTick = 500;
+        SlowTick = 550;
+        FastTick = 150;
 
         // You can also use this method to add to various action lists.
 
@@ -93,7 +100,7 @@ public class EraWarlock : Rotation
 
         if (me.IsValid())
         {
-            if (Api.Spellbook.CanCast("Demon Armor") && !me.Auras.Contains("Demon Armor", true))
+            if (Api.Spellbook.CanCast("Demon Armor") && !me.Auras.Contains("Demon Armor", false))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Demon Armor");
@@ -102,7 +109,7 @@ public class EraWarlock : Rotation
                 if (Api.Spellbook.Cast("Demon Armor"))
                     return true;
             }
-            if (Api.Spellbook.CanCast("Demon Skin") && (!me.Auras.Contains("Demon Armor", true) || !me.Auras.Contains("Demon Skin", true)))
+            if (Api.Spellbook.CanCast("Demon Skin") && !me.Auras.Contains("Demon Armor", false) && !me.Auras.Contains("Demon Skin", false))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Demon Skin");
@@ -112,7 +119,7 @@ public class EraWarlock : Rotation
                     return true;
             }
 
-            if ((!IsValid(pet) || PetHealth <= 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
+            if ((!IsValid(pet) ) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Summon Voidwalker.");
@@ -123,7 +130,7 @@ public class EraWarlock : Rotation
                     return true;
                 }
             }
-            else if ((!IsValid(pet) || PetHealth <= 0) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
+            else if ((!IsValid(pet) ) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Summon Imp.");
@@ -161,27 +168,45 @@ public class EraWarlock : Rotation
         //string[] healthstoneTypes = { "Minor Healthstone", "Lesser Healthstone", "Healthstone", "Greater Healthstone", "Major Healthstone", "Master Healthstone", "Demonic Healthstone", "Fel Healthstone" };
 
 
+        var reaction = me.GetReaction(target);
 
         if (target.IsValid())
         {
-            var reaction = me.GetReaction(target);
 
-            if (Api.Spellbook.CanCast("Shadow Bolt") && !target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) &&
-        mana > 20 && !IsNPC(target))
-
+            if (!target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target)  && healthPercentage > 50 && mana > 20 && PetHealth > 50)
             {
-               
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Haunt");
-                    Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Casting Petattack");
+                Console.ResetColor();
 
-                if (Api.Spellbook.Cast("Shadow Bolt"))
-                {
+                if (Api.UseMacro("Petattack"))
+
+                    // Update the lastMarkTime after successful casting
                     return true;
-                }
+
+
 
             }
         }
+        else
+        {
+            if (target.IsValid())
+            {
+                if (!target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target) && healthPercentage > 50 && mana > 20 && PetHealth > 50)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Casting Shadow Bolt");
+                    Console.ResetColor();
+
+                    if (Api.Spellbook.Cast("Shadow Bolt"))
+                    {
+                        return true;
+                    }
+
+                }
+            }
+        }
+       
         return base.PassivePulse();
 
     }
@@ -249,7 +274,7 @@ public class EraWarlock : Rotation
 
         if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
-       
+
         var meTarget = me.Target;
 
         if (meTarget == null || target.IsDead())
@@ -266,28 +291,7 @@ public class EraWarlock : Rotation
                 // without triggering a premature exit
             }
         }
-        if ((!IsValid(pet) || PetHealth <= 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Summon Voidwalker.");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Summon Voidwalker"))
-            {
-                return true;
-            }
-        }
-        else if ((!IsValid(pet) || PetHealth <= 0) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Summon Imp.");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Summon Imp"))
-            {
-                return true;
-            }
-        }
+       
         if (Api.Spellbook.CanCast("Drain Soul") && Api.Inventory.ItemCount("Soul Shard") <= 2 && targethealth <= 30 && mana > 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -299,77 +303,77 @@ public class EraWarlock : Rotation
                 return true;
             }
         }
+
+
+
+
+        if (Api.Spellbook.CanCast("Drain Life") && healthPercentage <= 50 && mana >= 5)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Drain Life");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Drain Life"))
+                return true;
+        }
+
+        if (Api.Spellbook.CanCast("Curse of Agony") && !target.Auras.Contains("Curse of Agony") && mana >= 10 && targethealth >= 30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Curse of Agony");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Curse of Agony"))
+                return true;
+        }
+
+        if (Api.Spellbook.CanCast("Corruption") && !target.Auras.Contains("Corruption") && mana >= 10 && targethealth >= 30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Corruption");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Corruption"))
+                return true;
+        }
         
-               
+        if (Api.Spellbook.CanCast("Shadow Bolt") && mana >= 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Shadow Bolt");
+            Console.ResetColor();
 
+            if (Api.Spellbook.Cast("Shadow Bolt"))
+                return true;
+        }
 
-                if (Api.Spellbook.CanCast("Drain Life") && healthPercentage <= 50 && mana >= 5)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Drain Life");
-                    Console.ResetColor();
+        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.Spellbook.CanCast("Shoot") && !me.IsShooting())
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Ranged weapon is equipped. Attempting to cast Shoot.");
+            Console.ResetColor();
 
-                    if (Api.Spellbook.Cast("Drain Life"))
-                        return true;
-                }
-
-                if (Api.Spellbook.CanCast("Curse of Agony") && !target.Auras.Contains("Curse of Agony") && mana >= 10 && targethealth >= 30)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Curse of Agony");
-                    Console.ResetColor();
-
-                    if (Api.Spellbook.Cast("Curse of Agony"))
-                        return true;
-                }
-
-                if (Api.Spellbook.CanCast("Corruption") && !target.Auras.Contains("Corruption") && mana >= 10 && targethealth >= 30)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Corruption");
-                    Console.ResetColor();
-
-                    if (Api.Spellbook.Cast("Corruption"))
-                        return true;
-                }
-
-
-
-                if (Api.Spellbook.CanCast("Shadow Bolt") && mana >= 10 && targethealth >= 15)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Shadow Bolt");
-                    Console.ResetColor();
-
-                    if (Api.Spellbook.Cast("Shadow Bolt"))
-                        return true;
-                }
-                
-
-                if (Api.Spellbook.CanCast("Shadow Bolt") && mana >= 10)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Shadow Bolt");
-                    Console.ResetColor();
-
-                    if (Api.Spellbook.Cast("Shadow Bolt"))
-                        return true;
-                }
-                if (Api.Spellbook.CanCast("Shoot"))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Shoot");
-                    Console.ResetColor();
-
-                    if (Api.Spellbook.Cast("Shoot"))
-                        return true;
-                }
-            
+            if (Api.Spellbook.Cast("Shoot"))
+            {
+                return true;
+            }
+        }
+        else if (Api.Spellbook.CanCast("Attack") && (!me.IsAutoAttacking() && !me.IsShooting()))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Attack");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Attack"))
+            {
+                return true;
+            }
+        }
 
 
 
-               
-        
+
+
+
         return base.CombatPulse();
     }
     private bool IsNPC(WowUnit unit)
@@ -445,7 +449,22 @@ public class EraWarlock : Rotation
 
 
         // Access the Bank property and use its methods
-       
+        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.HasMacro("Shoot"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Wand macro 'Shoot' is present.");
+            Console.ResetColor();
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("INGAME ..... Create Macro ");
+            Console.WriteLine("Macro name : Shoot");
+            Console.WriteLine("Macro code : /cast !Shoot");
+
+            Console.WriteLine("Save macro, exit options and when ingame RELOAD UI");
+            Console.ResetColor();
+        }
 
         if (HasItem("Lesser Healthstone"))
         {
