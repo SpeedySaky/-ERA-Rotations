@@ -5,8 +5,12 @@ using System.Collections.Generic;
 using wShadow.Warcraft.Classes;
 using wShadow.Warcraft.Defines;
 using wShadow.Warcraft.Managers;
+using wShadow.WowBots;
+using wShadow.WowBots.PartyInfo;
+using System.Linq;
 
-public class SoDHunter : Rotation
+
+public class EraHunter : Rotation
 {
 
     private bool HasEnchantment(EquipmentSlot slot, string enchantmentName)
@@ -35,6 +39,8 @@ public class SoDHunter : Rotation
     private DateTime lastDebugTime = DateTime.MinValue;
     private DateTime lastCallPetTime = DateTime.MinValue;
     private TimeSpan callPetCooldown = TimeSpan.FromSeconds(10);
+    private DateTime lastFeedTime = DateTime.MinValue;
+
 
 
     public override void Initialize()
@@ -47,8 +53,8 @@ public class SoDHunter : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 1550;
-        FastTick = 500;
+        SlowTick = 50;
+        FastTick = 150;
 
         // You can also use this method to add to various action lists.
 
@@ -71,14 +77,14 @@ public class SoDHunter : Rotation
         var me = Api.Player;
         var target = Api.Target;
         var mana = me.ManaPercent;
+        var healthPercentage = me.HealthPercent;
+        var targethealth = target.HealthPercent;
         var pet = me.Pet();
         var PetHealth = 0.0f;
         if (IsValid(pet))
         {
             PetHealth = pet.HealthPercent;
         }
-        var healthPercentage = me.HealthPercent;
-        var targethealth = target.HealthPercent;
 
         ShadowApi shadowApi = new ShadowApi();
 
@@ -94,15 +100,56 @@ public class SoDHunter : Rotation
         // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
 
-        if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsLooting() || me.IsFlying() || me.Auras.Contains("Drink") || me.Auras.Contains("Food") || me.IsMounted()) return false;
-        bool hasLion = HasEnchantment(EquipmentSlot.Chest, "Heart of the Lion");
+        if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsChanneling() || me.IsLooting() || me.IsFlying() || me.Auras.Contains("Drink") || me.Auras.Contains("Food") || me.IsMounted()) return false;
 
         string[] Arrows = { "Thorium Headed Arrow", "Jagged Arrow", "Razor Arrow", "Sharp Arrow", "Rough Arrow", "Doomshot", "Ice Threaded Arrow", "Explosive Arrow" };
         string[] Bullets = { "Thorium Shells", "Ice Threaded Bullet", "Rockshard Pellets", "Mithril Gyro-Shot", "Accurate Slugs", "Hi-Impact Mithril Slugs", "Exploding Shot", "Crafted Solid Shot", "Solid Shot", "Crafted Heavy Shot", "Heavy Shot", "Crafted Light Shot" };
 
 
+        if (!IsValid(pet) && null == pet && (DateTime.Now - lastCallPetTime) >= callPetCooldown && Api.Spellbook.CanCast("Call Pet"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Call Pet.");
+            Console.ResetColor();
 
+            if (Api.Spellbook.Cast("Call Pet"))
+            {
+                lastCallPetTime = DateTime.Now; // Update the lastCallPetTime after successful casting
+                return true;
+            }
+        }
+        if (null == pet && Api.Spellbook.CanCast("Revive Pet"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Ressing Pet");
+            Console.ResetColor();
 
+            if (Api.Spellbook.Cast("Revive Pet"))
+            {
+                return true;
+            }
+        }
+        if (IsValid(pet) && (DateTime.Now - lastFeedTime).TotalMinutes >= 10 && Api.HasMacro("Feed"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Feeding pet.");
+            Console.ResetColor();
+
+            if (Api.UseMacro("Feed"))
+            {
+                lastFeedTime = DateTime.Now; // Update lastFeedTime
+
+                // Log the estimated time until the next feeding attempt
+                var nextFeedTime = lastFeedTime.AddMinutes(10);
+                var timeUntilNextFeed = nextFeedTime - DateTime.Now;
+
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Next feed pet in: {timeUntilNextFeed.TotalMinutes} minutes.");
+                Console.ResetColor();
+
+                return true;
+            }
+        }
         if (Api.Spellbook.CanCast("Aspect of the Cheetah") && !me.Auras.Contains("Aspect of the Cheetah", false) && !me.IsMounted() && !me.Auras.Contains(415423, false))
 
         {
@@ -118,61 +165,6 @@ public class SoDHunter : Rotation
 
 
 
-        if ((DateTime.Now - lastCallPetTime) >= callPetCooldown && (!IsValid(pet) || PetHealth <= 0) && Api.Spellbook.CanCast("Call Pet"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Call Pet.");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Call Pet"))
-            {
-                lastCallPetTime = DateTime.Now; // Update the lastCallPetTime after successful casting
-                return true;
-            }
-        }
-        if ((!IsValid(pet)||PetHealth<=0) && Api.Spellbook.CanCast("Revive Pet"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Ressing Pet");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Revive Pet"))
-            {
-                return true;
-            }
-        }
-
-        //if (IsValid(pet) && (DateTime.Now - lastFeedTime).TotalMinutes >= 10 && Api.HasMacro("Feed"))
-        //{
-        //    Console.ForegroundColor = ConsoleColor.Green;
-        //    Console.WriteLine("Feeding pet.");
-        //    Console.ResetColor();
-
-        //    if (Api.UseMacro("Feed"))
-        //    {
-        //        lastFeedTime = DateTime.Now; // Update lastFeedTime
-
-        //        // Log the estimated time until the next feeding attempt
-        //        var nextFeedTime = lastFeedTime.AddMinutes(10);
-        //        var timeUntilNextFeed = nextFeedTime - DateTime.Now;
-
-        //        Console.ForegroundColor = ConsoleColor.Yellow;
-        //        Console.WriteLine($"Next feed pet in: {timeUntilNextFeed.TotalMinutes} minutes.");
-        //        Console.ResetColor();
-
-        //        return true;
-        //    }
-        //}
-        if (IsValid(pet) && PetHealth < 40 && Api.Spellbook.CanCast("Mend Pet") && !pet.Auras.Contains("Mend Pet") && mana > 10)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Pet health is low healing him");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Mend Pet"))
-
-                return true;
-        }
-
         if (Api.Spellbook.CanCast("Aspect of the Hawk") && !me.Auras.Contains("Aspect of the Hawk", false) && !me.Auras.Contains("Aspect of the Cheetah", false) && !me.Auras.Contains(415423, false))
 
         {
@@ -186,7 +178,6 @@ public class SoDHunter : Rotation
         }
 
         var reaction = me.GetReaction(target);
-
         if (target.IsValid())
         {
 
@@ -205,6 +196,26 @@ public class SoDHunter : Rotation
 
             }
         }
+        else
+        if (Api.Spellbook.CanCast("Serpent Sting") && !me.IsShooting() && !target.IsDead())
+        {
+
+            //if (distance <= 30)
+            
+                if (Api.Spellbook.Cast("Serpent Sting") )
+                    return true;
+            
+        }
+        else
+         if (Api.Spellbook.CanCast("Auto Shot") && !me.IsShooting() && !target.IsDead())
+        {
+
+            //if (distance <= 30)
+
+            if (Api.Spellbook.Cast("Auto Shot"))
+                return true;
+
+        }
         return base.PassivePulse();
 
     }
@@ -220,14 +231,7 @@ public class SoDHunter : Rotation
         var targethealth = target.HealthPercent;
         var mana = me.ManaPercent;
         var meTarget = me.Target;
-        var pet = me.Pet();
-        var targetDistanceToPet = target.Position.Distance2D(pet.Position);
 
-        var PetHealth = 0.0f;
-        if (IsValid(pet))
-        {
-            PetHealth = pet.HealthPercent;
-        }
         if ((DateTime.Now - lastDebugTime).TotalSeconds >= debugInterval)
         {
             LogPlayerStats();
@@ -236,7 +240,7 @@ public class SoDHunter : Rotation
 
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
-
+        var unfriendlyUnits = Api.UnitsTargetingMe(5, true); // Fetch units within 5 yards using 3D distance
 
 
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
@@ -259,6 +263,22 @@ public class SoDHunter : Rotation
             }
         }
 
+        if (meTarget == null || target.IsDead())
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Assist Pet");
+            Console.ResetColor();
+
+            // Use the Target property to set the player's target to the pet's target
+            if (Api.UseMacro("AssistPet"))
+            {
+                // Successfully assisted the pet, continue rotation
+                // Don't return true here, continue with the rest of the combat logic
+                // without triggering a premature exit
+            }
+        }
+
+
         if (mana <= 50 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
         {
             foreach (string manapot in MP)
@@ -275,57 +295,8 @@ public class SoDHunter : Rotation
                 }
             }
         }
+      
 
-        if ((!IsValid(pet) || PetHealth <= 0) && Api.Spellbook.CanCast("Call Pet"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Call Pet.");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Call Pet"))
-            {
-                lastCallPetTime = DateTime.Now; // Update the lastCallPetTime after successful casting
-                return true;
-            }
-        }
-        if ((!IsValid(pet) || PetHealth <= 0) && Api.Spellbook.CanCast("Revive Pet"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Ressing Pet");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Revive Pet"))
-            {
-                return true;
-            }
-        }
-
-        if (meTarget == null || target.IsDead())
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Assist Pet");
-            Console.ResetColor();
-
-            // Use the Target property to set the player's target to the pet's target
-            if (Api.UseMacro("AssistPet"))
-            {
-                // Successfully assisted the pet, continue rotation
-                // Don't return true here, continue with the rest of the combat logic
-                // without triggering a premature exit
-            }
-        }
-
-        if (Api.Spellbook.CanCast("Intimidation") && Api.Spellbook.HasSpell("Intimidation") && !Api.Spellbook.OnCooldown("Intimidation") && IsValid(pet) && (target.IsCasting() || target.IsChanneling()))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Intimidation");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Intimidation"))
-            {
-                return true;
-            }
-        }
         if (Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark"))
         {
 
@@ -339,28 +310,6 @@ public class SoDHunter : Rotation
             }
 
         }
-        if (Api.Spellbook.CanCast("Bestial Wrath") && Api.Spellbook.HasSpell("Bestial Wrath") && !Api.Spellbook.OnCooldown("Bestial Wrath"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Bestial Wrath");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Bestial Wrath"))
-            {
-                return true;
-            }
-        }
-        if (IsValid(pet) && PetHealth <= 30 && Api.Spellbook.CanCast("Mend Pet") && !pet.Auras.Contains("Mend Pet") && mana > 20)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Pet health is low healing him");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Mend Pet"))
-
-                return true;
-            // Add logic here for actions when pet's health is low, e.g., healing spells
-        }
-
 
         string[] Arrows = { "Thorium Headed Arrow", "Jagged Arrow", "Razor Arrow", "Sharp Arrow", "Rough Arrow", "Doomshot", "Ice Threaded Arrow", "Explosive Arrow" };
         string[] Bullets = { "Thorium Shells", "Ice Threaded Bullet", "Rockshard Pellets", "Mithril Gyro-Shot", "Accurate Slugs", "Hi-Impact Mithril Slugs", "Exploding Shot", "Crafted Solid Shot", "Solid Shot", "Crafted Heavy Shot", "Heavy Shot", "Crafted Light Shot" };
@@ -430,7 +379,7 @@ public class SoDHunter : Rotation
                 if (Api.Spellbook.Cast("Aimed Shot"))
                     return true;
             }
-            if (Api.Spellbook.CanCast("Multi Shot") && targetDistanceToPet <= 8)
+            if (Api.Spellbook.CanCast("Multi Shot") && targetDistance >= 8) //&& unfriendlyUnits >= 2)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Multi Shot");
@@ -439,8 +388,16 @@ public class SoDHunter : Rotation
                 if (Api.Spellbook.Cast("Multi Shot"))
                     return true;
             }
+            if (Api.Spellbook.CanCast("Arcane Shot") && mana > 30)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Casting Arcane Shot");
+                Console.ResetColor();
 
-            if (Api.Spellbook.CanCast("Auto Shot") && !me.IsShooting())
+                if (Api.Spellbook.Cast("Arcane Shot"))
+                    return true;
+            }
+            if (Api.Spellbook.CanCast("Auto Shot") && !me.IsShooting() )
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Auto Shot");
@@ -451,9 +408,19 @@ public class SoDHunter : Rotation
             }
         }
 
-        if (!target.IsDead() && targetDistance <= 8)
+        if (!target.IsDead() && targetDistance <= 10)
         {
+            if (Api.Spellbook.CanCast("Aspect of the Monkey") && !me.Auras.Contains("Aspect of the Monkey", false) && mana > 30)
 
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Casting Aspect of the Monkey");
+                Console.ResetColor();
+
+                if (Api.Spellbook.Cast("Aspect of the Monkey"))
+
+                    return true;
+            }
             if (Api.Spellbook.CanCast("Deterrence") && Api.UnfriendlyUnitsNearby(10, true) >= 2 && !Api.Spellbook.OnCooldown("Deterrence"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -535,13 +502,6 @@ public class SoDHunter : Rotation
         // Variables for player and target instances
         var me = Api.Player;
         var target = Api.Target;
-        var pet = me.Pet();
-        var PetHealth = 0.0f;
-        if (IsValid(pet))
-        {
-            PetHealth = pet.HealthPercent;
-        }
-
 
         // Health percentage of the player
         var healthPercentage = me.HealthPercent;
@@ -551,29 +511,45 @@ public class SoDHunter : Rotation
 
         var targetDistance = target.Position.Distance2D(me.Position);
 
+        string[] Arrows = { "Thorium Headed Arrow", "Jagged Arrow", "Razor Arrow", "Sharp Arrow", "Rough Arrow", "Doomshot", "Ice Threaded Arrow", "Explosive Arrow" };
+        string[] Bullets = { "Thorium Shells", "Ice Threaded Bullet", "Rockshard Pellets", "Mithril Gyro-Shot", "Accurate Slugs", "Hi-Impact Mithril Slugs", "Exploding Shot", "Crafted Solid Shot", "Solid Shot", "Crafted Heavy Shot", "Heavy Shot", "Crafted Light Shot" };
+
+        bool hasArrows = true;
+        bool hasBullets = true;
 
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine($"{mana}% Mana available");
         Console.WriteLine($"{healthPercentage}% Health available");
         Console.ResetColor();
+      
 
-
-
-
-        if (IsValid(pet))
+        foreach (var arrow in Arrows)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Pet is alive.");
-            Console.ResetColor();
-            // Additional actions for when the pet is dead
+            int quantity = Api.Inventory.ItemCount(arrow);
+            if (quantity > 0)
+            {
+                hasArrows = true;
+                Console.WriteLine($"Has {quantity} {arrow}");
+            }
+        }
+
+        foreach (var bullet in Bullets)
+        {
+            int quantity = Api.Inventory.ItemCount(bullet);
+            if (quantity > 0)
+            {
+                hasBullets = true;
+                Console.WriteLine($"Has {quantity} {bullet}");
+            }
+        }
+
+        if (hasArrows || hasBullets)
+        {
+            Console.WriteLine("Has ammo");
         }
         else
-        if ((!IsValid(pet) || PetHealth <= 0))
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Pet is dead.");
-            Console.ResetColor();
-            // Additional actions for when the pet's health is low
+            Console.WriteLine("No ammo");
         }
 
 
