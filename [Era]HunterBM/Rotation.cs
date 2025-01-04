@@ -162,7 +162,16 @@ public class EraHunter : Rotation
                 return true;
 
         }
+        if (IsValid(pet) && PetHealth <= 30 && Api.Spellbook.CanCast("Mend Pet") && !pet.Auras.Contains("Mend Pet") && mana > 20)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Pet health is low healing him");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Mend Pet"))
 
+                return true;
+            // Add logic here for actions when pet's health is low, e.g., healing spells
+        }
 
 
         if (Api.Spellbook.CanCast("Aspect of the Hawk") && !me.Auras.Contains("Aspect of the Hawk", false) && !me.Auras.Contains("Aspect of the Cheetah", false) && !me.Auras.Contains(415423, false))
@@ -246,7 +255,7 @@ public class EraHunter : Rotation
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
         string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
 
-        if (healthPercentage <= 70 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
+        if (healthPercentage <= 70 && (!Api.Inventory.OnCooldown(MP) && !Api.Inventory.OnCooldown(HP)))
         {
             foreach (string hpot in HP)
             {
@@ -277,7 +286,16 @@ public class EraHunter : Rotation
                 // without triggering a premature exit
             }
         }
+        if (IsValid(pet) && PetHealth <= 30 && Api.Spellbook.CanCast("Mend Pet") && !pet.Auras.Contains("Mend Pet") && mana > 20)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Pet health is low healing him");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Mend Pet"))
 
+                return true;
+            // Add logic here for actions when pet's health is low, e.g., healing spells
+        }
 
         if (mana <= 50 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
         {
