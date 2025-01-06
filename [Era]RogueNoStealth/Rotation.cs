@@ -15,6 +15,12 @@ public class RogueNoStealth : Rotation
     {
         return Api.Equipment.HasEnchantment(slot, enchantmentName);
     }
+    private CreatureType GetCreatureType(WowUnit unit)
+    {
+        return unit.Info.GetCreatureType();
+    }
+    private bool HasItem(object item)
+        => Api.Inventory.HasItem(item);
     private List<string> npcConditions = new List<string>
     {
         "Innkeeper", "Auctioneer", "Banker", "FlightMaster", "GuildBanker",
@@ -31,8 +37,7 @@ public class RogueNoStealth : Rotation
         }
         return true;
     }
-
-    private bool HasItem(object item) => Api.Inventory.HasItem(item);
+    private Dictionary<string, DateTime> potionCooldowns = new Dictionary<string, DateTime>();
     private int debugInterval = 5; // Set the debug interval in seconds
     private DateTime lastDebugTime = DateTime.MinValue;
 
@@ -47,7 +52,7 @@ public class RogueNoStealth : Rotation
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
         SlowTick = 1550;
-        FastTick = 500;
+        FastTick = 1000;
 
         // You can also use this method to add to various action lists.
 
@@ -84,11 +89,64 @@ public class RogueNoStealth : Rotation
 
         // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
-
+        string[] instantPoisons = { "Instant Poison", "Instant Poison II", "Instant Poison III", "Instant Poison IV", "Instant Poison V", "Instant Poison VI", "Instant Poison VII" };
+        string[] cripplingPoisons = { "Crippling Poison", "Crippling Poison II" };
+        bool hasOffhandEnchantment = Api.Equipment.HasEnchantment(EquipmentSlot.OffHand);
+        bool hasMainHandEnchantment = Api.Equipment.HasEnchantment(EquipmentSlot.MainHand);
         if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
+        foreach (var poison in instantPoisons)
+        {
+            int poisonCount = Api.Inventory.ItemCount(poison);
+            if (!hasMainHandEnchantment && poisonCount >= 1 && Api.HasMacro("Mainhand"))
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Casting {poison} on mainhand");
+                Console.ResetColor();
+                if (Api.UseMacro("Mainhand"))
+                {
+                    Console.WriteLine($"Successfully casted {poison} on mainhand");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to cast {poison} on mainhand");
+                }
+            }
+        }
+        foreach (var poison in cripplingPoisons)
+        {
+            int poisonCount = Api.Inventory.ItemCount(poison);
+            if (!hasOffhandEnchantment && poisonCount >= 1 && Api.HasMacro("Offhand"))
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Casting {poison} on off-hand");
+                Console.ResetColor();
+                if (Api.UseMacro("Offhand"))
+                {
+                    Console.WriteLine($"Successfully casted {poison} on off-hand");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to cast {poison} on off-hand");
+                }
+            }
+        }
 
-        if (Api.Spellbook.CanCast("Sprint") && !Api.Spellbook.OnCooldown("Sprint"))
+
+        //if (Api.Spellbook.CanCast("Stealth") && !Api.Spellbook.OnCooldown("Stealth") && !me.Auras.Contains("Stealth", false) && targetDistance<=25)
+        //{
+        //    Console.ForegroundColor = ConsoleColor.Green;
+        //    Console.WriteLine("Casting Stealth");
+        //    Console.ResetColor();
+        //    if (Api.Spellbook.Cast("Stealth"))
+        //    {
+        //        return true;
+        //    }
+        //}
+       
+        if (Api.Spellbook.CanCast("Sprint") && !Api.Spellbook.OnCooldown("Sprint") && targetDistance >= 40)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Sprint");
@@ -120,18 +178,28 @@ public class RogueNoStealth : Rotation
         var points = me.ComboPoints;
 
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
-
-        if (me.HealthPercent <= 70 && !Api.Inventory.OnCooldown(HP))
+        foreach (string hpot in HP)
+        {
+            bool isOnCooldown = potionCooldowns.ContainsKey(hpot) && (DateTime.Now - potionCooldowns[hpot]).TotalSeconds < 130;
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine($"{hpot} is on cooldown: {isOnCooldown}");
+        }
+        Console.ResetColor();
+        if (me.HealthPercent <= 70)
         {
             foreach (string hpot in HP)
             {
-                if (HasItem(hpot))
+                int potionCount = Api.Inventory.ItemCount(hpot);
+                bool isOnCooldown = potionCooldowns.ContainsKey(hpot) && (DateTime.Now - potionCooldowns[hpot]).TotalSeconds < 130;
+
+                if (potionCount > 0 && !isOnCooldown)
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Using Healing potion");
                     Console.ResetColor();
                     if (Api.Inventory.Use(hpot))
                     {
+                        potionCooldowns[hpot] = DateTime.Now; // Update the cooldown time
                         return true;
                     }
                 }
@@ -145,7 +213,7 @@ public class RogueNoStealth : Rotation
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
 
-
+       
         if (Api.Spellbook.CanCast("Adrenaline Rush") && !Api.Spellbook.OnCooldown("Adrenaline Rush"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -216,7 +284,9 @@ public class RogueNoStealth : Rotation
             if (Api.Spellbook.Cast("Blade Flurry"))
                 return true;
         }
-        if (Api.Spellbook.HasSpell("Rupture") && points >= 2 && !target.Auras.Contains("Rupture",true) && energy >= 25)
+        CreatureType targetCreatureType = GetCreatureType(target);
+
+        if (Api.Spellbook.HasSpell("Rupture") && points >= 2 && !target.Auras.Contains("Rupture",true) && energy >= 25 && (targetCreatureType != CreatureType.Mechanical || targetCreatureType != CreatureType.Elemental))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Casting Rupture ");
@@ -301,16 +371,45 @@ public class RogueNoStealth : Rotation
 
         // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
+        bool hasOffhandEnchantment = Api.Equipment.HasEnchantment(EquipmentSlot.OffHand);
+        bool hasMainHandEnchantment = Api.Equipment.HasEnchantment(EquipmentSlot.MainHand);
 
+        // Logging enchantment status
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"Mainhand has enchantment: {hasMainHandEnchantment}");
+        Console.WriteLine($"Offhand has enchantment: {hasOffhandEnchantment}");
+        Console.ResetColor();
 
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine($"{energy}% Energy available");
         Console.WriteLine($"{healthPercentage}% Health available");
         Console.WriteLine($"{points} points available");
 
+        // Check for instant poisons in the inventory
+        string[] instantPoisons = { "Instant Poison", "Instant Poison II", "Instant Poison III", "Instant Poison IV", "Instant Poison V", "Instant Poison VI", "Instant Poison VII" };
+        bool hasInstantPoison = Api.Inventory.HasItem(instantPoisons);
+
+        foreach (var poison in instantPoisons)
+        {
+            int poisonCount = Api.Inventory.ItemCount(poison);
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"Count of {poison}: {poisonCount}");
+        }
+        // Logging poison status
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine($"Has instant poison: {hasInstantPoison}");
+
+        string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
+
+        foreach (string hpot in HP)
+        {
+            bool isOnCooldown = Api.Inventory.OnCooldown(hpot);
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine($"{hpot} is on cooldown: {isOnCooldown}");
+        }
         Console.ResetColor();
-
-
+        Console.ResetColor();
     }
+
 
 }
