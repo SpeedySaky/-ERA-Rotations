@@ -39,6 +39,7 @@ public class EraFireMage : Rotation
     private int debugInterval = 5; // Set the debug interval in seconds
     private DateTime lastDebugTime = DateTime.MinValue;
     private DateTime lastPyro = DateTime.MinValue;
+    private TimeSpan callPyro = TimeSpan.FromSeconds(5);
 
     public override void Initialize()
     {
@@ -50,8 +51,8 @@ public class EraFireMage : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 1550;
-        FastTick = 750;
+        SlowTick = 1000;
+        FastTick = 550;
 
         // You can also use this method to add to various action lists.
 
@@ -208,11 +209,8 @@ public class EraFireMage : Rotation
             }
         }
 
-
-
-
-
         var reaction = me.GetReaction(target);
+
         if (target.IsValid())
         {
             if (!target.IsDead() &&
@@ -222,27 +220,46 @@ public class EraFireMage : Rotation
                  reaction != UnitReaction.Exalted) &&
                 mana > 20 && !IsNPC(target))
             {
-                Console.WriteLine("Trying to cast Frostbolt");
+                Console.WriteLine("Trying to cast Pyroblast");
 
-                // Try casting Frostbolt
+                // Try casting Pyroblast
+                if (Api.Spellbook.CanCast("Pyroblast") && !target.Auras.Contains("Pyroblast", true) && mana > 30)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Casting Pyroblast");
+                    Console.ResetColor();
+                    if (Api.Spellbook.Cast("Pyroblast"))
+                    {
+                        return true;
+                    }
+                }
+
+                // If Pyroblast cannot be cast, try casting Frostbolt
                 if (Api.Spellbook.CanCast("Frostbolt"))
                 {
-                    Api.Spellbook.Cast("Frostbolt");
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Casting Frostbolt");
-                    return true;
-                }
-                else
-                {
-                    // If Frostbolt fails, try casting Fireball
-                    if (Api.Spellbook.CanCast("Fireball"))
+                    Console.ResetColor();
+                    if (Api.Spellbook.Cast("Frostbolt"))
                     {
-                        Console.WriteLine("Casting Fireball");
-                        Api.Spellbook.Cast("Fireball");
+                        return true;
+                    }
+                }
+
+                // If Frostbolt cannot be cast, try casting Fireball
+                if (Api.Spellbook.CanCast("Fireball"))
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Casting Fireball");
+                    Console.ResetColor();
+                    if (Api.Spellbook.Cast("Fireball"))
+                    {
                         return true;
                     }
                 }
             }
         }
+
 
 
         // If none of the conditions are met or casting both spells fail
@@ -266,7 +283,11 @@ public class EraFireMage : Rotation
         string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
         // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
-
+        if ((DateTime.Now - lastDebugTime).TotalSeconds >= debugInterval)
+        {
+            LogPlayerStats();
+            lastDebugTime = DateTime.Now; // Update lastDebugTime
+        }
         if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsChanneling()) return false;
         if (me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
         var hasaura = me.Auras.Contains("Curse of Stalvan") || me.Auras.Contains("Curse of Blood");
@@ -328,7 +349,7 @@ public class EraFireMage : Rotation
 
         if (targetDistance >= 6 && targetDistance <= 12)
         {
-            if (Api.Spellbook.CanCast("Frost Nova")  && !Api.Spellbook.OnCooldown("Frost Nova"))
+            if (Api.Spellbook.CanCast("Frost Nova") && !Api.Spellbook.OnCooldown("Frost Nova"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Frost Nova");
@@ -398,17 +419,16 @@ public class EraFireMage : Rotation
         }
 
         // Offensive spells
-        if (Api.Spellbook.CanCast("Pyroblast") && !target.Auras.Contains("Pyroblast", true) && mana > 30)
+        if (Api.Spellbook.CanCast("Pyroblast") && !target.Auras.Contains("Pyroblast") && mana > 30 && (DateTime.Now - lastPyro) >= callPyro)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Pyroblast");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Pyroblast"))
-
             {
+                lastPyro = DateTime.Now; // Update the lastPyro time after successful casting
                 return true;
             }
-
         }
 
 
@@ -437,7 +457,7 @@ public class EraFireMage : Rotation
 
 
 
-        if (Api.Spellbook.CanCast("Fireball") && mana > 50)
+        if (Api.Spellbook.CanCast("Fireball") && mana > 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Fireball");
@@ -459,7 +479,7 @@ public class EraFireMage : Rotation
                 return true;
             }
         }
-    else if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && !me.IsShooting())
+        else if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && !me.IsShooting())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Attack");
