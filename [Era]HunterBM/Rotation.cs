@@ -240,7 +240,13 @@ public class EraHunter : Rotation
         var targethealth = target.HealthPercent;
         var mana = me.ManaPercent;
         var meTarget = me.Target;
+        var pet = me.Pet();
+        var PetHealth = 0.0f;
 
+        if (IsValid(pet))
+        {
+            PetHealth = pet.HealthPercent;
+        }
         if ((DateTime.Now - lastDebugTime).TotalSeconds >= debugInterval)
         {
             LogPlayerStats();
