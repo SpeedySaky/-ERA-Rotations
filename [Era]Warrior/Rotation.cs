@@ -4,8 +4,10 @@ using wShadow.Templates;
 using System.Collections.Generic;
 using wShadow.Warcraft.Classes;
 using wShadow.Warcraft.Defines;
+using wShadow.Warcraft.Managers;
+using wShadow.WowBots;
+using wShadow.WowBots.PartyInfo;
 using wShadow.Warcraft.CombatLog;
-
 public class Warrior : Rotation
 {
 
@@ -45,8 +47,8 @@ public class Warrior : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 1550;
-        FastTick = 500;
+        SlowTick = 550;
+        FastTick = 150;
 
         // You can also use this method to add to various action lists.
 
@@ -112,8 +114,7 @@ public class Warrior : Rotation
         var rage = me.Rage / 10;
         var target = Api.Target;
         var targethealth = target.HealthPercent;
-        // Check for the DODGE event
-       
+
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
@@ -136,6 +137,15 @@ public class Warrior : Rotation
         }
 
 
+        if (!target.Auras.Contains("Demoralizing Shout") && Api.Spellbook.CanCast("Demoralizing Shout") && rage > 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Demoralizing Shout");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Demoralizing Shout"))
+
+                return true;
+        }
         if (Api.Spellbook.CanCast("Bloodrage") && me.HealthPercent >= 85 && !Api.Spellbook.OnCooldown("Bloodrage"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -145,7 +155,7 @@ public class Warrior : Rotation
 
                 return true;
         }
-        if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring"))
+        if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring") && rage > 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Hamstring");
@@ -164,8 +174,6 @@ public class Warrior : Rotation
                 return true;
         }
 
-
-
         if (Api.Spellbook.CanCast("Execute") && targethealth <= 20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -176,7 +184,7 @@ public class Warrior : Rotation
                 return true;
         }
         CreatureType targetCreatureType = GetCreatureType(target);
-        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend", true) && rage > 10 && targetCreatureType != CreatureType.Mechanical)
+        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend", true) && rage > 10 && targetCreatureType != CreatureType.Mechanical && targetCreatureType != CreatureType.Elemental)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Rend");
@@ -214,15 +222,19 @@ public class Warrior : Rotation
 
         }
 
-        //if (target.DODGE() && Api.Spellbook.CanCast("Overpower") && rage > 5)
-        //{
-        //    Console.ForegroundColor = ConsoleColor.Green;
-        //    Console.WriteLine("Casting Overpower");
-        //    Console.ResetColor();
-        //    if (Api.Spellbook.Cast("Overpower"))
-        //        return true;
-        //}
-    
+        if (target.Auras.Contains(5302) && !Api.Spellbook.OnCooldown("Overpower") && rage >= 5)
+        {
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Overpower");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Overpower"))
+            {
+                return true;
+            }
+
+        }
+
 
         if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15)
         {
