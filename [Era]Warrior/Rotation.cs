@@ -4,10 +4,8 @@ using wShadow.Templates;
 using System.Collections.Generic;
 using wShadow.Warcraft.Classes;
 using wShadow.Warcraft.Defines;
-using wShadow.Warcraft.Managers;
-using wShadow.WowBots;
-using wShadow.WowBots.PartyInfo;
 using wShadow.Warcraft.CombatLog;
+
 public class Warrior : Rotation
 {
 
@@ -92,7 +90,7 @@ public class Warrior : Rotation
      reaction != UnitReaction.Exalted) &&
      !IsNPC(target) && healthPercentage > 80)
             {
-                if (Api.Spellbook.CanCast("Charge") && targetDistance > 8 && targetDistance < 25 && !Api.Spellbook.OnCooldown("Charge"))
+                if (Api.Spellbook.CanCast("Charge") && targetDistance > 8 && targetDistance < 30 && !Api.Spellbook.OnCooldown("Charge"))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Charge");
@@ -115,6 +113,7 @@ public class Warrior : Rotation
         var target = Api.Target;
         var targethealth = target.HealthPercent;
 
+        // Check for the DODGE event
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
@@ -136,128 +135,110 @@ public class Warrior : Rotation
             }
         }
 
-
-        if (!target.Auras.Contains("Demoralizing Shout") && Api.Spellbook.CanCast("Demoralizing Shout") && rage > 10)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Demoralizing Shout");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Demoralizing Shout"))
-
-                return true;
-        }
+        // Cast Bloodrage if appropriate
         if (Api.Spellbook.CanCast("Bloodrage") && me.HealthPercent >= 85 && !Api.Spellbook.OnCooldown("Bloodrage"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Bloodrage");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Bloodrage"))
-
                 return true;
         }
-        if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring") && rage > 10)
+
+        // Cast Hamstring if appropriate
+        if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Hamstring");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Hamstring"))
-
                 return true;
         }
+
+        // Cast Battle Shout if appropriate
         if (!me.Auras.Contains("Battle Shout") && Api.Spellbook.CanCast("Battle Shout") && rage > 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Battle Shout");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Battle Shout"))
-
                 return true;
         }
 
+        // Always check for Overpower and try to cast if the target has dodged and we have rage
+        if (Api.Spellbook.CanCast("Hamstring") && !Api.Spellbook.OnCooldown("Overpower") && rage > 10)
+        {
+            
+            if (Api.Spellbook.Cast("Overpower"))
+            {
+                return false; // Continue with the rotation after trying Overpower
+            }
+        }
+
+        // Cast Execute if appropriate
         if (Api.Spellbook.CanCast("Execute") && targethealth <= 20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Execute");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Execute"))
-
                 return true;
         }
+
+        // Cast Rend if appropriate
         CreatureType targetCreatureType = GetCreatureType(target);
-        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend", true) && rage > 10 && targetCreatureType != CreatureType.Mechanical && targetCreatureType != CreatureType.Elemental)
+        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend", true) && rage > 10 && targetCreatureType != CreatureType.Mechanical)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Rend");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Rend"))
-
                 return true;
         }
+
+        // Cast Thunder Clap if appropriate
         if (Api.Spellbook.CanCast("Thunder Clap") && !target.Auras.Contains("Thunder Clap", true) && rage > 20 && targethealth >= 30 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Thunder Clap");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Thunder Clap"))
-
                 return true;
         }
-        if (Api.Spellbook.CanCast("Sunder Armor") && !target.Auras.Contains("Sunder Armor", true))//&& target.Auras.GetStacks("Sunder Armor",true) < 2)
+
+        // Cast Sunder Armor if appropriate
+        if (Api.Spellbook.CanCast("Sunder Armor") && !target.Auras.Contains("Sunder Armor", true))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Sunder Armor");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Sunder Armor"))
-
                 return true;
         }
-        if (!me.Auras.Contains("Battle Shout") && Api.Spellbook.CanCast("Battle Shout") && rage > 10)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Battle Shout");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Battle Shout"))
 
-                return true;
-
-        }
-
-        if (target.Auras.Contains(5302) && !Api.Spellbook.OnCooldown("Overpower") && rage >= 5)
-        {
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Overpower");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Overpower"))
-            {
-                return true;
-            }
-
-        }
-
-
+        // Cast Heroic Strike if appropriate
         if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Heroic Strike");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Heroic Strike"))
-
                 return true;
-
         }
+
+        // Cast Attack if appropriate
         if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Attack");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Attack"))
-
                 return true;
-
         }
+
         return base.CombatPulse();
     }
+
 
 
     private bool IsNPC(WowUnit unit)

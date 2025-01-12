@@ -212,16 +212,16 @@ public class RogueNoStealth : Rotation
 
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
-        if (target.Auras.Contains(5302) && !Api.Spellbook.OnCooldown("Riposte") && energy>10)
-        {
-            
-                if (Api.Spellbook.Cast("Riposte"))
-                {
-                    return true;
-                }
-            
-        }
 
+        if (target.Auras.Contains(5302) && !Api.Spellbook.OnCooldown("Riposte") && energy > 10)
+        {
+
+            if (Api.Spellbook.Cast("Riposte"))
+            {
+                return true;
+            }
+
+        }
         if (Api.Spellbook.CanCast("Adrenaline Rush") && !Api.Spellbook.OnCooldown("Adrenaline Rush"))
         {
             Console.ForegroundColor = ConsoleColor.Green;

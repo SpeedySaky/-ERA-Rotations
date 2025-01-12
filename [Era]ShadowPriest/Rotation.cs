@@ -317,18 +317,18 @@ public class EraShadowPriest : Rotation
 
                 return true;
         }
-        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.HasMacro("Shoot") && !me.IsShooting())
+        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.Spellbook.CanCast("Shoot") && !me.IsShooting())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Ranged weapon is equipped. Attempting to cast Shoot.");
             Console.ResetColor();
 
-            if (Api.UseMacro("Shoot"))
+            if (Api.Spellbook.Cast("Shoot"))
             {
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
+        else if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && !me.IsShooting())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Attack");
