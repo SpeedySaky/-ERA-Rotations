@@ -28,6 +28,9 @@ public class EnhaShaman : Rotation
     private bool HasItem(object item) => Api.Inventory.HasItem(item);
     private int debugInterval = 5; // Set the debug interval in seconds
     private DateTime lastDebugTime = DateTime.MinValue;
+    private DateTime searingTotemLastCast = DateTime.MinValue; // Tracks when Searing Totem was last cast
+    private readonly TimeSpan searingTotemDuration = TimeSpan.FromSeconds(30); // Duration of Searing Totem
+
     private bool HasEnchantment(EquipmentSlot slot, string enchantmentName)
     {
         return Api.Equipment.HasEnchantment(slot, enchantmentName);
@@ -67,6 +70,9 @@ public class EnhaShaman : Rotation
         var healthPercentage = me.HealthPercent;
         var mana = me.ManaPercent;
         var Level = me.Level;
+        var target = Api.Target;
+
+        var targetDistance = target.Position.Distance2D(me.Position);
 
         if ((DateTime.Now - lastDebugTime).TotalSeconds >= debugInterval)
         {
@@ -90,17 +96,7 @@ public class EnhaShaman : Rotation
                 }
             }
 
-            bool hasAnyFlametongueEnchantment = HasAnyFlametongueEnchantment(EquipmentSlot.OffHand);
-            if (!hasAnyFlametongueEnchantment && Api.Spellbook.CanCast("Flametongue Weapon") && Level >= 20)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Flametongue Weapon on off-hand");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Flametongue Weapon"))
-                {
-                    return true;
-                }
-            }
+           
 
             if (Api.Spellbook.CanCast("Ghost Wolf") && !me.Auras.Contains("Ghost Wolf", false))
             {
@@ -121,6 +117,28 @@ public class EnhaShaman : Rotation
                 if (Api.Spellbook.Cast("Lightning Shield"))
                 {
                     return true;
+                }
+            }
+            var reaction = me.GetReaction(target);
+            if (target.IsValid())
+            {
+                if (!target.IsDead() &&
+                    (reaction != UnitReaction.Friendly &&
+                     reaction != UnitReaction.Honored &&
+                     reaction != UnitReaction.Revered &&
+                     reaction != UnitReaction.Exalted) &&
+                    mana > 20 && !IsNPC(target))
+                {
+                    Console.WriteLine("Trying to cast Lightning Bolt");
+
+                    // Try casting Frostbolt
+                    if (Api.Spellbook.CanCast("Lightning Bolt"))
+                    {
+                        Api.Spellbook.Cast("Lightning Bolt");
+                        Console.WriteLine("Casting Lightning Bolt");
+                        return true;
+                    }
+                   
                 }
             }
         }
@@ -173,7 +191,68 @@ public class EnhaShaman : Rotation
                 }
             }
         }
+        if (Api.Spellbook.CanCast("Strength of Earth Totem") && !me.Auras.Contains("Strength of Earth", false) && mana > 50)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Strength of Earth Totem");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Strength of Earth Totem"))
+            {
+                return true; // Stop here if successfully cast
+            }
+        }
 
+        // Fallback to Stoneskin Totem if Strength of Earth can't be cast
+        if (Api.Spellbook.CanCast("Stoneskin Totem") && !me.Auras.Contains("Stoneskin", false)  && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Stoneskin Totem");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Stoneskin Totem"))
+            {
+                return true;
+            }
+        }
+        if (Api.Spellbook.CanCast("Healing Stream Totem") && !me.Auras.Contains("Healing Stream", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Healing Stream Totem");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Healing Stream Totem"))
+            {
+                return true;
+            }
+        }
+        if (Api.Spellbook.CanCast("Searing Totem")
+        && DateTime.Now - searingTotemLastCast >= searingTotemDuration // Check if duration has elapsed
+        && mana > 50)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Searing Totem");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Searing Totem"))
+            {
+                searingTotemLastCast = DateTime.Now; // Update last cast time
+                return true;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Failed to cast Searing Totem");
+                Console.ResetColor();
+            }
+        }
+        if (Api.Spellbook.CanCast("Windfury Totem") && !me.Auras.Contains("Windfury", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Windfury Totem");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Windfury Totem"))
+            {
+                return true;
+            }
+        }
         if (Api.Spellbook.CanCast("Lightning Shield") && !me.Auras.Contains("Lightning Shield") && mana > 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -195,7 +274,7 @@ public class EnhaShaman : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Earth Shock") && !Api.Spellbook.OnCooldown("Earth Shock") && (target.IsCasting() || target.IsChanneling()))
+        if (Api.Spellbook.CanCast("Earth Shock") && mana > 20 && !Api.Spellbook.OnCooldown("Earth Shock") && (target.IsCasting() || target.IsChanneling()))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Earth Shock");
@@ -207,7 +286,7 @@ public class EnhaShaman : Rotation
         }
         bool hasAnyFlametongueEnchantment = HasAnyFlametongueEnchantment(EquipmentSlot.OffHand);
 
-        if (Api.Spellbook.CanCast("Frost Shock") && !Api.Spellbook.OnCooldown("Frost Shock"))
+        if (Api.Spellbook.CanCast("Frost Shock") && !Api.Spellbook.OnCooldown("Frost Shock") && mana > 20 && !target.Auras.Contains("Frost Shock"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Frost Shock");
@@ -217,7 +296,7 @@ public class EnhaShaman : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Flame Shock") && !Api.Spellbook.OnCooldown("Flame Shock") && !target.Auras.Contains("Flame Shock") )
+        if (Api.Spellbook.CanCast("Flame Shock") && !Api.Spellbook.OnCooldown("Flame Shock") && !target.Auras.Contains("Flame Shock") && mana > 20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Flame Shock");
@@ -228,7 +307,7 @@ public class EnhaShaman : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Stormstrike") &&  !Api.Spellbook.OnCooldown("Stormstrike"))
+        if (Api.Spellbook.CanCast("Stormstrike") &&  !Api.Spellbook.OnCooldown("Stormstrike") && mana >25)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Stormstrike");
@@ -240,7 +319,7 @@ public class EnhaShaman : Rotation
         }
 
 
-        if (Api.Spellbook.CanCast("Lightning Bolt") && targetDistance > 10)
+        if (Api.Spellbook.CanCast("Lightning Bolt") && targetDistance > 10 && mana >20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Lightning Bolt");
