@@ -139,6 +139,32 @@ public class Warrior : Rotation
                 }
             }
         }
+        if (DateTime.Now - lastOverpowerAttempt >= overpowerCooldown && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Attempting Overpower at {DateTime.Now}. Conditions: CanCast={Api.Spellbook.CanCast("Overpower")}, Rage={rage}, OnCooldown={Api.Spellbook.OnCooldown("Overpower")}");
+            Console.ResetColor();
+
+            bool castResult = Api.Spellbook.Cast("Overpower"); // Store the result for clarity
+
+            if (castResult)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Overpower cast successfully!");
+                Console.ResetColor();
+
+                lastOverpowerAttempt = DateTime.Now; // Set cooldown timer after successful cast
+                return true;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Overpower attempt failed, starting cooldown.");
+                Console.ResetColor();
+
+                lastOverpowerAttempt = DateTime.Now; // Start cooldown even if the cast fails
+            }
+        }
 
         // Cast Bloodrage if appropriate
         if (Api.Spellbook.CanCast("Bloodrage") && me.HealthPercent >= 85 && !Api.Spellbook.OnCooldown("Bloodrage"))
@@ -177,29 +203,20 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Demoralizing Shout"))
                 return true;
         }
-        if (DateTime.Now - lastOverpowerAttempt >= overpowerCooldown && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Attempting Overpower");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Overpower"))
-            {
-                lastOverpowerAttempt = DateTime.Now; // Set cooldown timer after successful cast
-                return true;
-            }
-            else
-            {
-                lastOverpowerAttempt = DateTime.Now; // Set cooldown even if the cast fails
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Overpower attempt failed, starting cooldown.");
-                Console.ResetColor();
-            }
-        }
+       
 
 
 
         // Cast Execute if appropriate
-        if (Api.Spellbook.CanCast("Execute") && targethealth <= 20)
+        if (Api.Spellbook.CanCast("Mortal Strike") &&   rage > 30 && !target.Auras.Contains("Mortal Strike") )
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Mortal Strike");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Mortal Strike"))
+                return true;
+        }
+        if (Api.Spellbook.CanCast("Mortal Strike") && rage >= 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Execute");
@@ -207,7 +224,6 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Execute"))
                 return true;
         }
-
         // Cast Rend if appropriate
         CreatureType targetCreatureType = GetCreatureType(target);
         if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend") && rage > 10 && targetCreatureType != CreatureType.Mechanical)
