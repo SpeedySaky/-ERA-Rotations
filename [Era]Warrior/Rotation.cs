@@ -216,7 +216,14 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Mortal Strike"))
                 return true;
         }
-        
+        if (Api.Spellbook.CanCast("Execute") && targethealth <=20 && !Api.Spellbook.OnCooldown("Execute") && rage > 15)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Execute");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Execute"))
+                return true;
+        }
         // Cast Rend if appropriate
         CreatureType targetCreatureType = GetCreatureType(target);
         if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend") && rage > 10 && targetCreatureType != CreatureType.Mechanical)
