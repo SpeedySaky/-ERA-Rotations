@@ -169,7 +169,14 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Battle Shout"))
                 return true;
         }
-
+        if (!target.Auras.Contains("Demoralizing Shout") && Api.Spellbook.CanCast("Demoralizing Shout") && rage > 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Demoralizing Shout");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Demoralizing Shout"))
+                return true;
+        }
         if (DateTime.Now - lastOverpowerAttempt >= overpowerCooldown && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
