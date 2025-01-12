@@ -289,7 +289,7 @@ public class Warrior : Rotation
                 return true;
         }
         // Cast Heroic Strike if appropriate
-        if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15 && Api.UnfriendlyUnitsNearby(5, true) == 2)
+        if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15 && Api.UnfriendlyUnitsNearby(5, true) == 1)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Heroic Strike");
