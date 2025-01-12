@@ -175,7 +175,14 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Bloodrage"))
                 return true;
         }
-
+        if (Api.Spellbook.CanCast("Recklessness") && me.HealthPercent >= 60 && !Api.Spellbook.OnCooldown("Recklessness"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Recklessness");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Recklessness"))
+                return true;
+        }
         // Cast Hamstring if appropriate
         if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring") && rage > 10)
         {
@@ -203,7 +210,16 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Demoralizing Shout"))
                 return true;
         }
-       
+
+        if (Api.Spellbook.CanCast("Sweeping Strikes") && Api.UnfriendlyUnitsNearby(5, true) >= 2 && !Api.Spellbook.OnCooldown("Sweeping Strikes") && rage > 30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Casting Sweeping Strikes");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Sweeping Strikes"))
+                return true;
+        }
 
 
 
@@ -225,6 +241,16 @@ public class Warrior : Rotation
                 return true;
         }
         // Cast Rend if appropriate
+        if (Api.Spellbook.CanCast("Whirlwind") && Api.UnfriendlyUnitsNearby(5, true) >= 2 && !Api.Spellbook.OnCooldown("Whirlwind") && rage > 25)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Casting Sweeping Strikes");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Whirlwind"))
+                return true;
+        }
+
         CreatureType targetCreatureType = GetCreatureType(target);
         if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend") && rage > 10 && targetCreatureType != CreatureType.Mechanical)
         {
@@ -254,9 +280,16 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Sunder Armor"))
                 return true;
         }
-
+        if (Api.Spellbook.CanCast("Cleave") && rage > 20 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Cleave");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Cleave"))
+                return true;
+        }
         // Cast Heroic Strike if appropriate
-        if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15)
+        if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15 && Api.UnfriendlyUnitsNearby(5, true) == 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Heroic Strike");
