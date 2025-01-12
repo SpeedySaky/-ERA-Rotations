@@ -11,6 +11,9 @@ using wShadow.WowBots.PartyInfo;
 
 public class RogueNoStealth : Rotation
 {
+    private DateTime lastRiposteAttempt = DateTime.MinValue; // Tracks the last time Riposte was attempted
+    private readonly TimeSpan riposteCooldown = TimeSpan.FromSeconds(3); // 10-second cooldown for Riposte
+
     private bool HasEnchantment(EquipmentSlot slot, string enchantmentName)
     {
         return Api.Equipment.HasEnchantment(slot, enchantmentName);
@@ -213,14 +216,25 @@ public class RogueNoStealth : Rotation
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
 
-        if (target.Auras.Contains(5302) && !Api.Spellbook.OnCooldown("Riposte") && energy > 10)
+        if ( DateTime.Now - lastRiposteAttempt >= riposteCooldown // Cooldown check
+        && !Api.Spellbook.OnCooldown("Riposte") // API cooldown check
+        && energy > 10) // Sufficient energy
         {
-
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Attempting Riposte");
+            Console.ResetColor();
             if (Api.Spellbook.Cast("Riposte"))
             {
+                lastRiposteAttempt = DateTime.Now; // Set cooldown timer after successful cast
                 return true;
             }
-
+            else
+            {
+                lastRiposteAttempt = DateTime.Now; // Set cooldown even if the cast fails
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Riposte attempt failed, starting cooldown.");
+                Console.ResetColor();
+            }
         }
         if (Api.Spellbook.CanCast("Adrenaline Rush") && !Api.Spellbook.OnCooldown("Adrenaline Rush"))
         {

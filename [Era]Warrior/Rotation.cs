@@ -11,7 +11,12 @@ public class Warrior : Rotation
 
     private int debugInterval = 5; // Set the debug interval in seconds
     private DateTime lastDebugTime = DateTime.MinValue;
+    private bool overpowerAttempted = false;
+    private DateTime lastOverpowerAttempt = DateTime.MinValue; // Tracks the last time Overpower was attempted
+    private readonly TimeSpan overpowerCooldown = TimeSpan.FromSeconds(3); // 10-second cooldown
+
     private CreatureType GetCreatureType(WowUnit unit)
+
     {
         return unit.Info.GetCreatureType();
     }
@@ -146,7 +151,7 @@ public class Warrior : Rotation
         }
 
         // Cast Hamstring if appropriate
-        if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring"))
+        if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring") && rage > 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Hamstring");
@@ -165,15 +170,26 @@ public class Warrior : Rotation
                 return true;
         }
 
-        // Always check for Overpower and try to cast if the target has dodged and we have rage
-        if (Api.Spellbook.CanCast("Hamstring") && !Api.Spellbook.OnCooldown("Overpower") && rage > 10)
+        if (DateTime.Now - lastOverpowerAttempt >= overpowerCooldown && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower"))
         {
-            
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Attempting Overpower");
+            Console.ResetColor();
             if (Api.Spellbook.Cast("Overpower"))
             {
-                return false; // Continue with the rotation after trying Overpower
+                lastOverpowerAttempt = DateTime.Now; // Set cooldown timer after successful cast
+                return true;
+            }
+            else
+            {
+                lastOverpowerAttempt = DateTime.Now; // Set cooldown even if the cast fails
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Overpower attempt failed, starting cooldown.");
+                Console.ResetColor();
             }
         }
+
+
 
         // Cast Execute if appropriate
         if (Api.Spellbook.CanCast("Execute") && targethealth <= 20)
@@ -187,7 +203,7 @@ public class Warrior : Rotation
 
         // Cast Rend if appropriate
         CreatureType targetCreatureType = GetCreatureType(target);
-        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend", true) && rage > 10 && targetCreatureType != CreatureType.Mechanical)
+        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend") && rage > 10 && targetCreatureType != CreatureType.Mechanical)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Rend");
