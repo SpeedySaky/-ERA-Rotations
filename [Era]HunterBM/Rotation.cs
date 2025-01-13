@@ -40,7 +40,7 @@ public class EraHunter : Rotation
     private int debugInterval = 5; // Set the debug interval in seconds
     private DateTime lastDebugTime = DateTime.MinValue;
     private DateTime lastCallPetTime = DateTime.MinValue;
-    private TimeSpan callPetCooldown = TimeSpan.FromSeconds(10);
+    private TimeSpan callPetCooldown = TimeSpan.FromSeconds(5);
     private DateTime lastFeedTime = DateTime.MinValue;
 
 

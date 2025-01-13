@@ -253,12 +253,12 @@ public class EnhaShaman : Rotation
                 Console.ResetColor();
             }
         }
-        if (Api.Spellbook.CanCast("Windfury Totem") && !me.Auras.Contains("Windfury", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        if (Api.Spellbook.CanCast("Grace of Air Totem") && !me.Auras.Contains("Grace of Air", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Windfury Totem");
+            Console.WriteLine("Casting Grace of Air Totem");
             Console.ResetColor();
-            if (Api.Spellbook.Cast("Windfury Totem"))
+            if (Api.Spellbook.Cast("Grace of Air Totem"))
             {
                 return true;
             }
