@@ -12,7 +12,7 @@ using System.Linq;
 
 public class EraHunter : Rotation
 {
-
+    
     private bool HasEnchantment(EquipmentSlot slot, string enchantmentName)
     {
         return Api.Equipment.HasEnchantment(slot, enchantmentName);
@@ -40,7 +40,7 @@ public class EraHunter : Rotation
     private int debugInterval = 5; // Set the debug interval in seconds
     private DateTime lastDebugTime = DateTime.MinValue;
     private DateTime lastCallPetTime = DateTime.MinValue;
-    private TimeSpan callPetCooldown = TimeSpan.FromSeconds(5);
+    private TimeSpan callPetCooldown = TimeSpan.FromSeconds(10);
     private DateTime lastFeedTime = DateTime.MinValue;
 
 
@@ -120,7 +120,7 @@ public class EraHunter : Rotation
                 return true;
             }
         }
-        if (null == pet || PetHealth == 0 && Api.Spellbook.CanCast("Revive Pet"))
+        if ((null == pet || PetHealth == 0) && Api.Spellbook.CanCast("Revive Pet") && mana > 70)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Ressing Pet");
@@ -193,7 +193,7 @@ public class EraHunter : Rotation
         {
             // Debug: Checking target details
 
-            if (targetDistance <= 35 && !target.IsDead() && !target.Auras.Contains("Hunter's Mark", false) && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target) && Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false) && healthPercentage > 50 && PetHealth > 50)
+            if (IsValid(pet) && targetDistance <= 35 && !target.IsDead() && !target.Auras.Contains("Hunter's Mark", false) && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target) && Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false) && healthPercentage > 50 && PetHealth > 50)
             {
                 // Debug: Condition check for Hunter's Mark
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -254,7 +254,7 @@ public class EraHunter : Rotation
             lastDebugTime = DateTime.Now; // Update lastDebugTime
         }
 
-        if (!me.IsValid() ||  me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (!me.IsValid() ||  me.IsDead() || me.IsGhost() || me.IsCasting()  || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         var unfriendlyUnits = Api.UnitsTargetingMe(5, true); // Fetch units within 5 yards using 3D distance
 
@@ -263,7 +263,15 @@ public class EraHunter : Rotation
         {
             return true; // Exit early if a potion was used
         }
-        if (me.InCombat() && meTarget == null) // Check if the player is in combat and has no valid target
+        if (PetHealth <= 30 && Api.Spellbook.CanCast("Mend Pet") && mana > 20 && petDistance <= 25)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Pet health is low healing him");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Mend Pet"))
+                return true;
+        }
+        if (pet.InCombat() && (meTarget == null || target.IsDead())) // Check if the player is in combat and has no valid target
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Assist Pet");
@@ -274,7 +282,7 @@ public class EraHunter : Rotation
                 return true;
             }
         }
-        if (!IsValid(pet) && null == pet && (DateTime.Now - lastCallPetTime) >= callPetCooldown && Api.Spellbook.CanCast("Call Pet"))
+        if ((null == pet || PetHealth == 0) && (DateTime.Now - lastCallPetTime) >= callPetCooldown && Api.Spellbook.CanCast("Call Pet"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Call Pet.");
@@ -286,7 +294,7 @@ public class EraHunter : Rotation
                 return true;
             }
         }
-        if (null == pet || PetHealth == 0 && Api.Spellbook.CanCast("Revive Pet"))
+        if ((null == pet || PetHealth == 0) && Api.Spellbook.CanCast("Revive Pet") && mana>70)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Ressing Pet");
@@ -299,19 +307,12 @@ public class EraHunter : Rotation
         }
 
         // Pet Healing Logic
-        if (IsValid(pet) && PetHealth <= 30 && Api.Spellbook.CanCast("Mend Pet") && !pet.Auras.Contains("Mend Pet") && mana > 20 && petDistance <= 20)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Pet health is low healing him");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Mend Pet"))
-                return true;
-        }
+        
 
         
 
         // Hunter's Mark Logic
-        if (Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false))
+        if (Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false) && meTarget != null)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Mark");
@@ -323,7 +324,7 @@ public class EraHunter : Rotation
         }
 
         // Melee Logic (if target is within melee range)
-        if (targetDistance <= 8)
+        if (targetDistance <= 9)
         {
             // Melee abilities such as "Raptor Strike" and "Attack"
             if (Api.Spellbook.CanCast("Wing Clip") && mana > 15 && !target.Auras.Contains("Wing Clip"))
