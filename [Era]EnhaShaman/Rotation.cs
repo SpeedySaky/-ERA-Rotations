@@ -191,7 +191,17 @@ public class EnhaShaman : Rotation
                 }
             }
         }
-        if (Api.Spellbook.CanCast("Strength of Earth Totem") && !me.Auras.Contains("Strength of Earth", false) && mana > 50)
+        if (Api.Spellbook.CanCast("Earth Shock") && mana > 20 && !Api.Spellbook.OnCooldown("Earth Shock") && (target.IsCasting() || target.IsChanneling()))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Earth Shock");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Earth Shock"))
+            {
+                return true;
+            }
+        }
+        if (Api.Spellbook.CanCast("Strength of Earth Totem") && !me.Auras.Contains("Strength of Earth", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) == 1)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Strength of Earth Totem");
@@ -274,16 +284,7 @@ public class EnhaShaman : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Earth Shock") && mana > 20 && !Api.Spellbook.OnCooldown("Earth Shock") && (target.IsCasting() || target.IsChanneling()))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Earth Shock");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Earth Shock"))
-            {
-                return true;
-            }
-        }
+        
         bool hasAnyFlametongueEnchantment = HasAnyFlametongueEnchantment(EquipmentSlot.OffHand);
 
         if (Api.Spellbook.CanCast("Frost Shock") && !Api.Spellbook.OnCooldown("Frost Shock") && mana > 20 && !target.Auras.Contains("Frost Shock"))
