@@ -254,7 +254,7 @@ public class EraHunter : Rotation
             lastDebugTime = DateTime.Now; // Update lastDebugTime
         }
 
-        if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (!me.IsValid() ||  me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         var unfriendlyUnits = Api.UnitsTargetingMe(5, true); // Fetch units within 5 yards using 3D distance
 
