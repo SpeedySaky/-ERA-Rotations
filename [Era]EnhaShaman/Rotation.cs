@@ -46,8 +46,8 @@ public class EnhaShaman : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 1550;
-        FastTick = 400;
+        SlowTick = 800;
+        FastTick = 300;
 
         // You can also use this method to add to various action lists.
 
@@ -98,7 +98,7 @@ public class EnhaShaman : Rotation
 
            
 
-            if (Api.Spellbook.CanCast("Ghost Wolf") && !me.Auras.Contains("Ghost Wolf", false))
+            if (Api.Spellbook.CanCast("Ghost Wolf") && !me.Auras.Contains("Ghost Wolf", false) && mana > 42 && healthPercentage > 50)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Ghost Wolf");
