@@ -39,9 +39,9 @@ public class EraFireMage : Rotation
 
     private bool HasItem(object item) => Api.Inventory.HasItem(item);
     private int debugInterval = 5; // Set the debug interval in seconds
+    private DateTime lastPyroblastTime = DateTime.MinValue; // Track the last time Pyroblast was cast
     private DateTime lastDebugTime = DateTime.MinValue;
     private DateTime lastPyro = DateTime.MinValue;
-
     public override void Initialize()
     {
         // Can set min/max levels required for this rotation.
@@ -87,7 +87,7 @@ public class EraFireMage : Rotation
         var mana = me.ManaPercent;
         var targetDistance = target.Position.Distance2D(me.Position);
 
-        if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (me.IsDead() || me.IsGhost() || me.IsLooting() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
         var hasaura = me.Auras.Contains("Curse of Stalvan") || me.Auras.Contains("Curse of Blood");
         if (me.IsValid())
         {
@@ -224,22 +224,22 @@ public class EraFireMage : Rotation
                  reaction != UnitReaction.Exalted) &&
                 mana > 20 && !IsNPC(target))
             {
-                Console.WriteLine("Trying to cast Frostbolt");
+                Console.WriteLine("Trying to cast Fireball");
 
                 // Try casting Frostbolt
-                if (Api.Spellbook.CanCast("Frostbolt"))
+                if (Api.Spellbook.CanCast("Fireball"))
                 {
-                    Api.Spellbook.Cast("Frostbolt");
-                    Console.WriteLine("Casting Frostbolt");
+                    Api.Spellbook.Cast("Fireball");
+                    Console.WriteLine("Casting Fireball");
                     return true;
                 }
                 else
                 {
                     // If Frostbolt fails, try casting Fireball
-                    if (Api.Spellbook.CanCast("Fireball"))
+                    if (Api.Spellbook.CanCast("Frostbolt"))
                     {
-                        Console.WriteLine("Casting Fireball");
-                        Api.Spellbook.Cast("Fireball");
+                        Console.WriteLine("Casting Frostbolt");
+                        Api.Spellbook.Cast("Frostbolt");
                         return true;
                     }
                 }
@@ -262,7 +262,7 @@ public class EraFireMage : Rotation
 
         // Power percentages for different resources
         var mana = me.ManaPercent;
-        if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (me.IsDead() || me.IsGhost() || me.IsCasting()  || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
         string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
@@ -334,7 +334,7 @@ public class EraFireMage : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Counterspell") && !Api.Spellbook.OnCooldown("Counterspell") && (target.IsCasting() || target.IsChanneling()))
+        if (Api.Spellbook.CanCast("Counterspell")  && !Api.Spellbook.OnCooldown("Counterspell") && (target.IsCasting() || target.IsChanneling()) && targetDistance < 28)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Counterspell");
@@ -345,7 +345,7 @@ public class EraFireMage : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Evocation") && !Api.Spellbook.OnCooldown("Evocation") && mana <= 10)
+        if (Api.Spellbook.CanCast("Evocation") && !Api.Spellbook.OnCooldown("Evocation") && mana <= 10 && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Evocation");
@@ -379,22 +379,29 @@ public class EraFireMage : Rotation
         }
 
         // Offensive spells
-        if (Api.Spellbook.CanCast("Pyroblast") && !target.Auras.Contains("Pyroblast", true) && mana > 50 && targethealth > 50)
+        if (Api.Spellbook.CanCast("Pyroblast") && !target.Auras.Contains("Pyroblast", true) && mana > 50 && targethealth > 50 && !me.IsMoving())
         {
+            var timeSinceLastPyroblast = (DateTime.Now - lastPyroblastTime).TotalSeconds;
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Pyroblast");
+            Console.WriteLine($"Time since last Pyroblast: {timeSinceLastPyroblast} seconds");
             Console.ResetColor();
-            if (Api.Spellbook.Cast("Pyroblast"))
 
+            if (timeSinceLastPyroblast >= 3)
             {
-                return true;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Casting Pyroblast");
+                Console.ResetColor();
+                if (Api.Spellbook.Cast("Pyroblast"))
+                {
+                    lastPyroblastTime = DateTime.Now; // Update the last cast time
+                    return true;
+                }
             }
-
         }
 
 
 
-        if (Api.Spellbook.CanCast("Scorch") && mana > 80)
+        if (Api.Spellbook.CanCast("Scorch") && mana > 80 && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Scorch");
@@ -405,7 +412,7 @@ public class EraFireMage : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Fire Blast") && mana > 15 && !Api.Spellbook.OnCooldown("Fire Blast") && targetDistance < 25 && targethealth > 20)
+        if (Api.Spellbook.CanCast("Fire Blast") && !me.IsMoving() && mana > 15 && !Api.Spellbook.OnCooldown("Fire Blast") && targetDistance < 25 && targethealth > 20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Fire Blast");
@@ -418,7 +425,7 @@ public class EraFireMage : Rotation
 
 
 
-        if (Api.Spellbook.CanCast("Fireball") && mana > 20 && targethealth > 20)
+        if (Api.Spellbook.CanCast("Fireball") && mana > 20 && targethealth > 20 && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Fireball");
@@ -429,7 +436,7 @@ public class EraFireMage : Rotation
             }
         }
 
-        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.Spellbook.CanCast("Shoot") && !me.IsShooting())
+        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.Spellbook.CanCast("Shoot") && !me.IsShooting() && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Ranged weapon is equipped. Attempting to cast Shoot.");
@@ -440,7 +447,7 @@ public class EraFireMage : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && !me.IsShooting())
+        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && !me.IsShooting() && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Attack");
@@ -485,61 +492,56 @@ public class EraFireMage : Rotation
     }
     public bool UsePotions()
     {
-        string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
-        string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
-
         // Check for health potions if health is low
         if (Api.Player.HealthPercent <= 70)
         {
-            foreach (string hpot in HP)
-            {
-                int potionCount = Api.Inventory.ItemCount(hpot);
-
-                // Check cooldown for potions
-                bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
-
-                if (potionCount > 0 && !isOnCooldown)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"Using {hpot} for healing.");
-                    Console.ResetColor();
-
-                    if (Api.Inventory.Use(hpot))
-                    {
-                        potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
-                        return true; // Exit early after using the potion
-                    }
-                }
-            }
+            if (UsePotion("Major Healing Potion")) return true;
+            if (UsePotion("Superior Healing Potion")) return true;
+            if (UsePotion("Greater Healing Potion")) return true;
+            if (UsePotion("Healing Potion")) return true;
+            if (UsePotion("Lesser Healing Potion")) return true;
+            if (UsePotion("Minor Healing Potion")) return true;
         }
 
         // Check for mana potions if mana is low
-        if (Api.Player.ManaPercent < 70)
+        if (Api.Player.ManaPercent < 30)
         {
-            foreach (string mpot in MP)
-            {
-                int potionCount = Api.Inventory.ItemCount(mpot);
-
-                // Check cooldown for potions
-                bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
-
-                if (potionCount > 0 && !isOnCooldown)
-                {
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine($"Using {mpot} for mana.");
-                    Console.ResetColor();
-
-                    if (Api.Inventory.Use(mpot))
-                    {
-                        potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
-                        return true; // Exit early after using the potion
-                    }
-                }
-            }
+            if (UsePotion("Major Mana Potion")) return true;
+            if (UsePotion("Superior Mana Potion")) return true;
+            if (UsePotion("Greater Mana Potion")) return true;
+            if (UsePotion("Mana Potion")) return true;
+            if (UsePotion("Lesser Mana Potion")) return true;
+            if (UsePotion("Minor Mana Potion")) return true;
         }
 
         return false; // No potions were used
     }
+
+    private bool UsePotion(string potionName)
+    {
+        int potionCount = Api.Inventory.ItemCount(potionName);
+
+        // Check cooldown for potions
+        bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
+
+        if (potionCount > 0 && !isOnCooldown)
+        {
+            Console.ForegroundColor = potionName.Contains("Mana") ? ConsoleColor.Cyan : ConsoleColor.Green;
+            Console.WriteLine($"Using {potionName}.");
+            Console.ResetColor();
+
+            if (Api.Inventory.Use(potionName))
+            {
+                potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                return true; // Exit early after using the potion
+            }
+        }
+
+        return false; // Potion was not used
+    }
+
+
+
     private void LogPlayerStats()
     {
         // Variables for player and target instances
@@ -550,16 +552,13 @@ public class EraFireMage : Rotation
         // Health percentage of the player
         var healthPercentage = me.HealthPercent;
 
-
         // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
-
 
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine($"{mana} Mana available");
         Console.WriteLine($"{healthPercentage}% Health available");
         Console.ResetColor();
-
 
         if (me.Auras.Contains("Frost Armor")) // Replace "Thorns" with the actual aura name
         {
@@ -573,11 +572,12 @@ public class EraFireMage : Rotation
             Console.ResetColor();
         }
 
-
-
         // Define food and water types
         string[] waterTypes = { "Conjured Mana Strudel", "Conjured Mountain Spring Water", "Conjured Crystal Water", "Conjured Sparkling Water", "Conjured Mineral Water", "Conjured Spring Water", "Conjured Purified Water", "Conjured Fresh Water", "Conjured Water" };
         string[] foodTypes = { "Conjured Mana Strudel", "Conjured Cinnamon Roll", "Conjured Sweet Roll", "Conjured Sourdough", "Conjured Pumpernickel", "Conjured Rye", "Conjured Bread", "Conjured Muffin" };
+        string[] healthPotions = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
+        string[] manaPotions = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
+
         // Count food items in the inventory
         int foodCount = 0;
         foreach (string foodType in foodTypes)
@@ -599,25 +599,57 @@ public class EraFireMage : Rotation
         Console.WriteLine("Current Food Count: " + foodCount);
         Console.WriteLine("Current Water Count: " + waterCount);
         Console.ResetColor();
+
+        // Log available health potions
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("Available Health Potions:");
+        LogPotionCount("Major Healing Potion");
+        LogPotionCount("Superior Healing Potion");
+        LogPotionCount("Greater Healing Potion");
+        LogPotionCount("Healing Potion");
+        LogPotionCount("Lesser Healing Potion");
+        LogPotionCount("Minor Healing Potion");
+        Console.ResetColor();
+
+        // Log available mana potions
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("Available Mana Potions:");
+        LogPotionCount("Major Mana Potion");
+        LogPotionCount("Superior Mana Potion");
+        LogPotionCount("Greater Mana Potion");
+        LogPotionCount("Mana Potion");
+        LogPotionCount("Lesser Mana Potion");
+        LogPotionCount("Minor Mana Potion");
+        Console.ResetColor();
+
+        // Log potion cooldown timer
+        if (potionCooldowns.ContainsKey("Potion"))
+        {
+            var cooldownRemaining = 130 - (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds;
+            if (cooldownRemaining > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine($"Potion cooldown remaining: {Math.Ceiling(cooldownRemaining)} seconds");
+                Console.ResetColor();
+            }
+        }
+
         var hasaura = me.Auras.Contains("Curse of Stalvan");
-
-        if (Api.Equipment.HasItem(EquipmentSlot.Extra) && Api.HasMacro("Shoot"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Wand macro 'Shoot' is present.");
-            Console.ResetColor();
-        }
-        else
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("INGAME ..... Create Macro ");
-            Console.WriteLine("Macro name : Shoot");
-            Console.WriteLine("Macro code : /cast !Shoot");
-
-            Console.WriteLine("Save macro, exit options and when ingame RELOAD UI");
-            Console.ResetColor();
-        }
-
         Console.ResetColor();
     }
+
+    private void LogPotionCount(string potionName)
+    {
+        int count = Api.Inventory.ItemCount(potionName);
+        Console.WriteLine($"Checking {potionName}: {count}");
+        if (count > 0)
+        {
+            Console.WriteLine($"{potionName}: {count}");
+        }
+    }
+
+
+
+
+
 }
