@@ -52,8 +52,8 @@ public class EraFireMage : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 1000;
-        FastTick = 800;
+        SlowTick = 700;
+        FastTick = 15;
 
         // You can also use this method to add to various action lists.
 
