@@ -17,6 +17,8 @@ public class EnhaShaman : Rotation
         "VendorReagent", "WildBattlePet", "GarrisonMissionNPC", "GarrisonTalentNPC",
         "QuestGiver"
     };
+    private Dictionary<string, DateTime> potionCooldowns = new Dictionary<string, DateTime>();
+
     public bool IsValid(WowUnit unit)
     {
         if (unit == null || unit.Address == null)
@@ -157,40 +159,12 @@ public class EnhaShaman : Rotation
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
         string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
-
-        if (me.HealthPercent <= 70 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
+        if (UsePotions())
         {
-            foreach (string hpot in HP)
-            {
-                if (HasItem(hpot))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Using Healing potion");
-                    Console.ResetColor();
-                    if (Api.Inventory.Use(hpot))
-                    {
-                        return true;
-                    }
-                }
-            }
+            return true; // Exit early if a potion was used
         }
 
-        if (me.ManaPercent <= 50 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
-        {
-            foreach (string manapot in MP)
-            {
-                if (HasItem(manapot))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Using mana potion");
-                    Console.ResetColor();
-                    if (Api.Inventory.Use(manapot))
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
+       
         if (Api.Spellbook.CanCast("Earth Shock") && mana > 20 && !Api.Spellbook.OnCooldown("Earth Shock") && (target.IsCasting() || target.IsChanneling()))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -383,6 +357,64 @@ public class EnhaShaman : Rotation
 
         return false;
     }
+    public bool UsePotions()
+    {
+        string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
+        string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
+
+        // Check for health potions if health is low
+        if (Api.Player.HealthPercent <= 70)
+        {
+            foreach (string hpot in HP)
+            {
+                int potionCount = Api.Inventory.ItemCount(hpot);
+
+                // Check cooldown for potions
+                bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
+
+                if (potionCount > 0 && !isOnCooldown)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"Using {hpot} for healing.");
+                    Console.ResetColor();
+
+                    if (Api.Inventory.Use(hpot))
+                    {
+                        potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                        return true; // Exit early after using the potion
+                    }
+                }
+            }
+        }
+
+        // Check for mana potions if mana is low
+        if (Api.Player.ManaPercent < 70)
+        {
+            foreach (string mpot in MP)
+            {
+                int potionCount = Api.Inventory.ItemCount(mpot);
+
+                // Check cooldown for potions
+                bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
+
+                if (potionCount > 0 && !isOnCooldown)
+                {
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine($"Using {mpot} for mana.");
+                    Console.ResetColor();
+
+                    if (Api.Inventory.Use(mpot))
+                    {
+                        potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                        return true; // Exit early after using the potion
+                    }
+                }
+            }
+        }
+
+        return false; // No potions were used
+    }
+
     private void LogPlayerStats()
     {
         var me = Api.Player;

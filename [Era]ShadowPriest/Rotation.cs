@@ -1,4 +1,4 @@
-using System;
+tusing System;
 using System.Threading;
 using wShadow.Templates;
 using System.Collections.Generic;
@@ -25,6 +25,7 @@ public class EraShadowPriest : Rotation
         return true;
     }
     private bool HasItem(object item) => Api.Inventory.HasItem(item);
+    private Dictionary<string, DateTime> potionCooldowns = new Dictionary<string, DateTime>();
 
     private DateTime lastDebugTime = DateTime.MinValue;
     private int debugInterval = 5; // Set the debug interval in seconds
@@ -221,40 +222,40 @@ public class EraShadowPriest : Rotation
         string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
 
 
-        if (me.HealthPercent <= 70 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
+        if (UsePotions())
         {
-            foreach (string hpot in HP)
+            return true; // Exit early if a potion was used
+        }
+        if (Api.Spellbook.CanCast("Renew") && !me.Auras.Contains("Renew", true) && healthPercentage < 80 && mana > 20)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Renew");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Renew"))
             {
-                if (HasItem(hpot))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Using Healing potion");
-                    Console.ResetColor();
-                    if (Api.Inventory.Use(hpot))
-                    {
-                        return true;
-                    }
-                }
+                return true;
             }
         }
-
-        if (me.ManaPercent <= 50 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
+        if (Api.Spellbook.CanCast("Lesser Heal")  && healthPercentage < 60 && me.Level <20 && mana > 20)
         {
-            foreach (string manapot in MP)
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Lesser Heal");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Lesser Heal"))
             {
-                if (HasItem(manapot))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Using mana potion");
-                    Console.ResetColor();
-                    if (Api.Inventory.Use(manapot))
-                    {
-                        return true;
-                    }
-                }
+                return true;
             }
         }
-
+        if (Api.Spellbook.CanCast("Flash Heal") && healthPercentage < 60 && me.Level >= 20 && mana >20)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Flash Heal");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Flash Heal"))
+            {
+                return true;
+            }
+        }
         // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
         if (Api.Spellbook.CanCast("Power Word: Shield") && !me.Auras.Contains("Power Word: Shield",true) && mana > 15 && !me.Auras.Contains("Weakened Soul",true))
@@ -342,7 +343,63 @@ public class EraShadowPriest : Rotation
 
         return base.CombatPulse();
     }
+    public bool UsePotions()
+    {
+        string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
+        string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
 
+        // Check for health potions if health is low
+        if (Api.Player.HealthPercent <= 70)
+        {
+            foreach (string hpot in HP)
+            {
+                int potionCount = Api.Inventory.ItemCount(hpot);
+
+                // Check cooldown for potions
+                bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
+
+                if (potionCount > 0 && !isOnCooldown)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"Using {hpot} for healing.");
+                    Console.ResetColor();
+
+                    if (Api.Inventory.Use(hpot))
+                    {
+                        potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                        return true; // Exit early after using the potion
+                    }
+                }
+            }
+        }
+
+        // Check for mana potions if mana is low
+        if (Api.Player.ManaPercent < 70)
+        {
+            foreach (string mpot in MP)
+            {
+                int potionCount = Api.Inventory.ItemCount(mpot);
+
+                // Check cooldown for potions
+                bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
+
+                if (potionCount > 0 && !isOnCooldown)
+                {
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine($"Using {mpot} for mana.");
+                    Console.ResetColor();
+
+                    if (Api.Inventory.Use(mpot))
+                    {
+                        potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                        return true; // Exit early after using the potion
+                    }
+                }
+            }
+        }
+
+        return false; // No potions were used
+    }
 
     private bool IsNPC(WowUnit unit)
     {

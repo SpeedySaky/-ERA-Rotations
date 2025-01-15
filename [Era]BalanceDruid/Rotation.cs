@@ -223,7 +223,7 @@ public class EraBalanceDruid : Rotation
         var points = me.ComboPoints;
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
         string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
-        if (!target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (!target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting()  || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
 
         if (me.HealthPercent <= 70 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
@@ -271,7 +271,7 @@ public class EraBalanceDruid : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Healing Touch") && healthPercentage <= 45 && mana >= 20)
+        if (Api.Spellbook.CanCast("Healing Touch") && healthPercentage <= 45 && mana >= 20 && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Healing Touch");
@@ -281,7 +281,7 @@ public class EraBalanceDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Healing Touch") && healthPercentage <= 45 && mana >= 20)
+        if (Api.Spellbook.CanCast("Healing Touch") && healthPercentage <= 45 && mana >= 20 && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Healing Touch");
@@ -300,7 +300,7 @@ public class EraBalanceDruid : Rotation
 
                 return true;
         }
-        if (Api.Spellbook.CanCast("Starfire") && me.Auras.Contains(417157) && mana > 10)
+        if (Api.Spellbook.CanCast("Starfire") && me.Auras.Contains(417157) && mana > 10 && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Starfire");
@@ -323,7 +323,7 @@ public class EraBalanceDruid : Rotation
         }
 
 
-        if (Api.Spellbook.CanCast("Wrath") && me.Auras.Contains(408248) && mana > 10)
+        if (Api.Spellbook.CanCast("Wrath") && me.Auras.Contains(408248) && mana > 10 && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Wrath with Eclipse");
@@ -333,7 +333,7 @@ public class EraBalanceDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Wrath") && mana > 10)
+        if (Api.Spellbook.CanCast("Wrath") && mana > 10 && !me.IsMoving())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Wrath");
@@ -343,13 +343,12 @@ public class EraBalanceDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Attack"))
+        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Attack");
-            Console.ResetColor();
+            Api.Spellbook.Cast("Attack");
+            Console.WriteLine("Attacking");
+            if (Api.Spellbook.Cast("Judgement"))
 
-            if (Api.Spellbook.Cast("Attack"))
                 return true;
         }
 
