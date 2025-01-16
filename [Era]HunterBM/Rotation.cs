@@ -9,7 +9,6 @@ using wShadow.WowBots;
 using wShadow.WowBots.PartyInfo;
 using System.Linq;
 
-
 public class EraHunter : Rotation
 {
 
@@ -423,34 +422,9 @@ public class EraHunter : Rotation
         return base.CombatPulse();
     }
 
-    public bool UsePotions()
-    {
-        // Check for health potions if health is low
-        if (Api.Player.HealthPercent <= 70)
-        {
-            if (UsePotion("Major Healing Potion")) return true;
-            if (UsePotion("Superior Healing Potion")) return true;
-            if (UsePotion("Greater Healing Potion")) return true;
-            if (UsePotion("Healing Potion")) return true;
-            if (UsePotion("Lesser Healing Potion")) return true;
-            if (UsePotion("Minor Healing Potion")) return true;
-        }
+   
 
-        // Check for mana potions if mana is low
-        if (Api.Player.ManaPercent < 30)
-        {
-            if (UsePotion("Major Mana Potion")) return true;
-            if (UsePotion("Superior Mana Potion")) return true;
-            if (UsePotion("Greater Mana Potion")) return true;
-            if (UsePotion("Mana Potion")) return true;
-            if (UsePotion("Lesser Mana Potion")) return true;
-            if (UsePotion("Minor Mana Potion")) return true;
-        }
 
-        return false; // No potions were used
-    }
-
-    
     private bool IsNPC(WowUnit unit)
     {
         if (!IsValid(unit))
