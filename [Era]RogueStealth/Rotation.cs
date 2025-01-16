@@ -9,10 +9,11 @@ using wShadow.WowBots;
 using wShadow.WowBots.PartyInfo;
 
 
-public class RogueNoStealth : Rotation
+public class RogueStealth : Rotation
 {
     private DateTime lastRiposteAttempt = DateTime.MinValue; // Tracks the last time Riposte was attempted
     private readonly TimeSpan riposteCooldown = TimeSpan.FromSeconds(3); // 10-second cooldown for Riposte
+    private Dictionary<string, DateTime> potionCooldowns = new Dictionary<string, DateTime>();
 
     private bool HasEnchantment(EquipmentSlot slot, string enchantmentName)
     {
@@ -40,7 +41,6 @@ public class RogueNoStealth : Rotation
         }
         return true;
     }
-    private Dictionary<string, DateTime> potionCooldowns = new Dictionary<string, DateTime>();
     private int debugInterval = 5; // Set the debug interval in seconds
     private DateTime lastDebugTime = DateTime.MinValue;
 
@@ -96,12 +96,12 @@ public class RogueNoStealth : Rotation
         string[] cripplingPoisons = { "Crippling Poison", "Crippling Poison II" };
         bool hasOffhandEnchantment = Api.Equipment.HasEnchantment(EquipmentSlot.OffHand);
         bool hasMainHandEnchantment = Api.Equipment.HasEnchantment(EquipmentSlot.MainHand);
-        if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (me.IsDead() || me.IsGhost() || me.IsLooting() || me.IsCasting() || me.IsMoving() || me.IsChanneling()  || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         foreach (var poison in instantPoisons)
         {
             int poisonCount = Api.Inventory.ItemCount(poison);
-            if (!hasMainHandEnchantment && poisonCount >= 1 && Api.HasMacro("Mainhand"))
+            if (!hasMainHandEnchantment && poisonCount >= 1 && Api.HasMacro("Mainhand") && !me.Auras.Contains("Stealth", false))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"Casting {poison} on mainhand");
@@ -120,7 +120,7 @@ public class RogueNoStealth : Rotation
         foreach (var poison in cripplingPoisons)
         {
             int poisonCount = Api.Inventory.ItemCount(poison);
-            if (!hasOffhandEnchantment && poisonCount >= 1 && Api.HasMacro("Offhand"))
+            if (!hasOffhandEnchantment && poisonCount >= 1 && Api.HasMacro("Offhand") && !me.Auras.Contains("Stealth", false))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"Casting {poison} on off-hand");
@@ -138,18 +138,18 @@ public class RogueNoStealth : Rotation
         }
 
 
-        //if (Api.Spellbook.CanCast("Stealth") && !Api.Spellbook.OnCooldown("Stealth") && !me.Auras.Contains("Stealth", false) && targetDistance<=25)
-        //{
-        //    Console.ForegroundColor = ConsoleColor.Green;
-        //    Console.WriteLine("Casting Stealth");
-        //    Console.ResetColor();
-        //    if (Api.Spellbook.Cast("Stealth"))
-        //    {
-        //        return true;
-        //    }
-        //}
-       
-        if (Api.Spellbook.CanCast("Sprint") && !Api.Spellbook.OnCooldown("Sprint") && targetDistance >= 40)
+        if (Api.Spellbook.CanCast("Stealth") && !Api.Spellbook.OnCooldown("Stealth") && !me.Auras.Contains("Stealth", false) && targetDistance <= 40)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Stealth");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Stealth"))
+            {
+                return true;
+            }
+        }
+
+        if (Api.Spellbook.CanCast("Sprint") && !Api.Spellbook.OnCooldown("Sprint") && targetDistance <= 40 )
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Sprint");
@@ -159,7 +159,18 @@ public class RogueNoStealth : Rotation
                 return true;
             }
         }
+        var reaction = me.GetReaction(target);
+        if (Api.Spellbook.CanCast("Backstab") && energy > 60 && target.IsValid() && !target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && targetDistance < 10 && !IsNPC(target) && me.Auras.Contains("Stealth", false))
+            {
+                Console.WriteLine("Trying to cast Backstab");
 
+            // Try casting Frostbolt
+            if (Api.Spellbook.Cast("Backstab"))
+            {
+                return true;
+            }
+        }
+        
         return base.PassivePulse();
 
     }
@@ -180,6 +191,7 @@ public class RogueNoStealth : Rotation
         var energy = me.Energy; // Energy
         var points = me.ComboPoints;
 
+        string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
         if (UsePotions())
         {
             return true; // Exit early if a potion was used
@@ -429,6 +441,11 @@ public class RogueNoStealth : Rotation
         var targetDistance = target.Position.Distance2D(me.Position);
         bool hasOffhandEnchantment = Api.Equipment.HasEnchantment(EquipmentSlot.OffHand);
         bool hasMainHandEnchantment = Api.Equipment.HasEnchantment(EquipmentSlot.MainHand);
+        // Define food and water types
+        string[] waterTypes = { "Conjured Mana Strudel", "Conjured Mountain Spring Water", "Conjured Crystal Water", "Conjured Sparkling Water", "Conjured Mineral Water", "Conjured Spring Water", "Conjured Purified Water", "Conjured Fresh Water", "Conjured Water" };
+        string[] foodTypes = { "Conjured Mana Strudel", "Conjured Cinnamon Roll", "Conjured Sweet Roll", "Conjured Sourdough", "Conjured Pumpernickel", "Conjured Rye", "Conjured Bread", "Conjured Muffin" };
+        string[] healthPotions = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
+        string[] manaPotions = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
 
         // Logging enchantment status
         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -463,7 +480,6 @@ public class RogueNoStealth : Rotation
             Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine($"{hpot} is on cooldown: {isOnCooldown}");
         }
-        Console.ResetColor();
         Console.ResetColor();
         // Log available health potions
         Console.ForegroundColor = ConsoleColor.Yellow;
