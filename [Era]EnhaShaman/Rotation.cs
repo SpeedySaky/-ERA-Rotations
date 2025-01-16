@@ -98,7 +98,7 @@ public class EnhaShaman : Rotation
                 }
             }
 
-           
+
 
             if (Api.Spellbook.CanCast("Ghost Wolf") && !me.Auras.Contains("Ghost Wolf", false) && mana > 42 && healthPercentage > 50)
             {
@@ -140,7 +140,7 @@ public class EnhaShaman : Rotation
                         Console.WriteLine("Casting Lightning Bolt");
                         return true;
                     }
-                   
+
                 }
             }
         }
@@ -164,7 +164,7 @@ public class EnhaShaman : Rotation
             return true; // Exit early if a potion was used
         }
 
-       
+
         if (Api.Spellbook.CanCast("Earth Shock") && mana > 20 && !Api.Spellbook.OnCooldown("Earth Shock") && (target.IsCasting() || target.IsChanneling()))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -187,7 +187,7 @@ public class EnhaShaman : Rotation
         }
 
         // Fallback to Stoneskin Totem if Strength of Earth can't be cast
-        if (Api.Spellbook.CanCast("Stoneskin Totem") && !me.Auras.Contains("Stoneskin", false)  && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        if (Api.Spellbook.CanCast("Stoneskin Totem") && !me.Auras.Contains("Stoneskin", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Stoneskin Totem");
@@ -258,7 +258,7 @@ public class EnhaShaman : Rotation
                 return true;
             }
         }
-        
+
         bool hasAnyFlametongueEnchantment = HasAnyFlametongueEnchantment(EquipmentSlot.OffHand);
 
         if (Api.Spellbook.CanCast("Frost Shock") && !Api.Spellbook.OnCooldown("Frost Shock") && mana > 20 && !target.Auras.Contains("Frost Shock"))
@@ -282,7 +282,7 @@ public class EnhaShaman : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Stormstrike") &&  !Api.Spellbook.OnCooldown("Stormstrike") && mana >25)
+        if (Api.Spellbook.CanCast("Stormstrike") && !Api.Spellbook.OnCooldown("Stormstrike") && mana > 25)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Stormstrike");
@@ -294,7 +294,7 @@ public class EnhaShaman : Rotation
         }
 
 
-        if (Api.Spellbook.CanCast("Lightning Bolt") && targetDistance > 10 && mana >20)
+        if (Api.Spellbook.CanCast("Lightning Bolt") && targetDistance > 10 && mana > 20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Lightning Bolt");
@@ -319,7 +319,55 @@ public class EnhaShaman : Rotation
         return base.CombatPulse();
     }
 
+    public bool UsePotions()
+    {
+        // Check for health potions if health is low
+        if (Api.Player.HealthPercent <= 70)
+        {
+            if (UsePotion("Major Healing Potion")) return true;
+            if (UsePotion("Superior Healing Potion")) return true;
+            if (UsePotion("Greater Healing Potion")) return true;
+            if (UsePotion("Healing Potion")) return true;
+            if (UsePotion("Lesser Healing Potion")) return true;
+            if (UsePotion("Minor Healing Potion")) return true;
+        }
 
+        // Check for mana potions if mana is low
+        if (Api.Player.ManaPercent < 30)
+        {
+            if (UsePotion("Major Mana Potion")) return true;
+            if (UsePotion("Superior Mana Potion")) return true;
+            if (UsePotion("Greater Mana Potion")) return true;
+            if (UsePotion("Mana Potion")) return true;
+            if (UsePotion("Lesser Mana Potion")) return true;
+            if (UsePotion("Minor Mana Potion")) return true;
+        }
+
+        return false; // No potions were used
+    }
+
+    private bool UsePotion(string potionName)
+    {
+        int potionCount = Api.Inventory.ItemCount(potionName);
+
+        // Check cooldown for potions
+        bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
+
+        if (potionCount > 0 && !isOnCooldown)
+        {
+            Console.ForegroundColor = potionName.Contains("Mana") ? ConsoleColor.Cyan : ConsoleColor.Green;
+            Console.WriteLine($"Using {potionName}.");
+            Console.ResetColor();
+
+            if (Api.Inventory.Use(potionName))
+            {
+                potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                return true; // Exit early after using the potion
+            }
+        }
+
+        return false; // Potion was not used
+    }
     private bool HasAnyRockbiterEnchantment(EquipmentSlot slot)
     {
         return HasEnchantment(slot, "Rockbiter 7") || HasEnchantment(slot, "Rockbiter 6") || HasEnchantment(slot, "Rockbiter 5") || HasEnchantment(slot, "Rockbiter 4") || HasEnchantment(slot, "Rockbiter 3") || HasEnchantment(slot, "Rockbiter 2") || HasEnchantment(slot, "Rockbiter 1");
@@ -446,5 +494,47 @@ public class EnhaShaman : Rotation
 
         }
         Console.ResetColor();
+        // Log available health potions
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("Available Health Potions:");
+        LogPotionCount("Major Healing Potion");
+        LogPotionCount("Superior Healing Potion");
+        LogPotionCount("Greater Healing Potion");
+        LogPotionCount("Healing Potion");
+        LogPotionCount("Lesser Healing Potion");
+        LogPotionCount("Minor Healing Potion");
+        Console.ResetColor();
+
+        // Log available mana potions
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("Available Mana Potions:");
+        LogPotionCount("Major Mana Potion");
+        LogPotionCount("Superior Mana Potion");
+        LogPotionCount("Greater Mana Potion");
+        LogPotionCount("Mana Potion");
+        LogPotionCount("Lesser Mana Potion");
+        LogPotionCount("Minor Mana Potion");
+        Console.ResetColor();
+
+        // Log potion cooldown timer
+        if (potionCooldowns.ContainsKey("Potion"))
+        {
+            var cooldownRemaining = 130 - (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds;
+            if (cooldownRemaining > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine($"Potion cooldown remaining: {Math.Ceiling(cooldownRemaining)} seconds");
+                Console.ResetColor();
+            }
+        }
+    }
+    private void LogPotionCount(string potionName)
+    {
+        int count = Api.Inventory.ItemCount(potionName);
+        Console.WriteLine($"Checking {potionName}: {count}");
+        if (count > 0)
+        {
+            Console.WriteLine($"{potionName}: {count}");
+        }
     }
 }

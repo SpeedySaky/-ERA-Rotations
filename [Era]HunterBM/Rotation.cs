@@ -12,7 +12,7 @@ using System.Linq;
 
 public class EraHunter : Rotation
 {
-    
+
     private bool HasEnchantment(EquipmentSlot slot, string enchantmentName)
     {
         return Api.Equipment.HasEnchantment(slot, enchantmentName);
@@ -254,7 +254,7 @@ public class EraHunter : Rotation
             lastDebugTime = DateTime.Now; // Update lastDebugTime
         }
 
-        if (!me.IsValid() ||  me.IsDead() || me.IsGhost() || me.IsCasting()  || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (!me.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         var unfriendlyUnits = Api.UnitsTargetingMe(5, true); // Fetch units within 5 yards using 3D distance
 
@@ -294,7 +294,7 @@ public class EraHunter : Rotation
                 return true;
             }
         }
-        if ((null == pet || PetHealth == 0) && Api.Spellbook.CanCast("Revive Pet") && mana>70)
+        if ((null == pet || PetHealth == 0) && Api.Spellbook.CanCast("Revive Pet") && mana > 70)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Ressing Pet");
@@ -307,9 +307,9 @@ public class EraHunter : Rotation
         }
 
         // Pet Healing Logic
-        
 
-        
+
+
 
         // Hunter's Mark Logic
         if (Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false) && meTarget != null)
@@ -423,7 +423,55 @@ public class EraHunter : Rotation
         return base.CombatPulse();
     }
 
+    public bool UsePotions()
+    {
+        // Check for health potions if health is low
+        if (Api.Player.HealthPercent <= 70)
+        {
+            if (UsePotion("Major Healing Potion")) return true;
+            if (UsePotion("Superior Healing Potion")) return true;
+            if (UsePotion("Greater Healing Potion")) return true;
+            if (UsePotion("Healing Potion")) return true;
+            if (UsePotion("Lesser Healing Potion")) return true;
+            if (UsePotion("Minor Healing Potion")) return true;
+        }
 
+        // Check for mana potions if mana is low
+        if (Api.Player.ManaPercent < 30)
+        {
+            if (UsePotion("Major Mana Potion")) return true;
+            if (UsePotion("Superior Mana Potion")) return true;
+            if (UsePotion("Greater Mana Potion")) return true;
+            if (UsePotion("Mana Potion")) return true;
+            if (UsePotion("Lesser Mana Potion")) return true;
+            if (UsePotion("Minor Mana Potion")) return true;
+        }
+
+        return false; // No potions were used
+    }
+
+    private bool UsePotion(string potionName)
+    {
+        int potionCount = Api.Inventory.ItemCount(potionName);
+
+        // Check cooldown for potions
+        bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
+
+        if (potionCount > 0 && !isOnCooldown)
+        {
+            Console.ForegroundColor = potionName.Contains("Mana") ? ConsoleColor.Cyan : ConsoleColor.Green;
+            Console.WriteLine($"Using {potionName}.");
+            Console.ResetColor();
+
+            if (Api.Inventory.Use(potionName))
+            {
+                potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                return true; // Exit early after using the potion
+            }
+        }
+
+        return false; // Potion was not used
+    }
     private bool IsNPC(WowUnit unit)
     {
         if (!IsValid(unit))
@@ -566,8 +614,49 @@ public class EraHunter : Rotation
             Console.WriteLine("No ammo");
         }
 
+        // Log available health potions
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("Available Health Potions:");
+        LogPotionCount("Major Healing Potion");
+        LogPotionCount("Superior Healing Potion");
+        LogPotionCount("Greater Healing Potion");
+        LogPotionCount("Healing Potion");
+        LogPotionCount("Lesser Healing Potion");
+        LogPotionCount("Minor Healing Potion");
+        Console.ResetColor();
 
+        // Log available mana potions
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("Available Mana Potions:");
+        LogPotionCount("Major Mana Potion");
+        LogPotionCount("Superior Mana Potion");
+        LogPotionCount("Greater Mana Potion");
+        LogPotionCount("Mana Potion");
+        LogPotionCount("Lesser Mana Potion");
+        LogPotionCount("Minor Mana Potion");
+        Console.ResetColor();
 
+        // Log potion cooldown timer
+        if (potionCooldowns.ContainsKey("Potion"))
+        {
+            var cooldownRemaining = 130 - (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds;
+            if (cooldownRemaining > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine($"Potion cooldown remaining: {Math.Ceiling(cooldownRemaining)} seconds");
+                Console.ResetColor();
+            }
+        }
+
+    }
+    private void LogPotionCount(string potionName)
+    {
+        int count = Api.Inventory.ItemCount(potionName);
+        Console.WriteLine($"Checking {potionName}: {count}");
+        if (count > 0)
+        {
+            Console.WriteLine($"{potionName}: {count}");
+        }
     }
 }
 

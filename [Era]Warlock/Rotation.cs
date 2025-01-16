@@ -21,6 +21,7 @@ public class EraWarlock : Rotation
         "VendorReagent", "WildBattlePet", "GarrisonMissionNPC", "GarrisonTalentNPC",
         "QuestGiver"
     };
+    private Dictionary<string, DateTime> potionCooldowns = new Dictionary<string, DateTime>();
 
     public bool IsValid(WowUnit unit)
     {
@@ -119,7 +120,7 @@ public class EraWarlock : Rotation
                     return true;
             }
 
-            if ((!IsValid(pet) ) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
+            if ((!IsValid(pet)) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Summon Voidwalker.");
@@ -130,7 +131,7 @@ public class EraWarlock : Rotation
                     return true;
                 }
             }
-            else if ((!IsValid(pet) ) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
+            else if ((!IsValid(pet)) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Summon Imp.");
@@ -173,7 +174,7 @@ public class EraWarlock : Rotation
         if (target.IsValid())
         {
 
-            if (!target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target)  && healthPercentage > 50 && mana > 20 && PetHealth > 50)
+            if (!target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target) && healthPercentage > 50 && mana > 20 && PetHealth > 50)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Petattack");
@@ -206,7 +207,7 @@ public class EraWarlock : Rotation
                 }
             }
         }
-       
+
         return base.PassivePulse();
 
     }
@@ -235,38 +236,9 @@ public class EraWarlock : Rotation
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
         string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
 
-        if (me.HealthPercent <= 70 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
+        if (UsePotions())
         {
-            foreach (string hpot in HP)
-            {
-                if (HasItem(hpot))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Using Healing potion");
-                    Console.ResetColor();
-                    if (Api.Inventory.Use(hpot))
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        if (me.ManaPercent <= 50 && (!Api.Inventory.OnCooldown(MP) || !Api.Inventory.OnCooldown(HP)))
-        {
-            foreach (string manapot in MP)
-            {
-                if (HasItem(manapot))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Using mana potion");
-                    Console.ResetColor();
-                    if (Api.Inventory.Use(manapot))
-                    {
-                        return true;
-                    }
-                }
-            }
+            return true; // Exit early if a potion was used
         }
 
         // Target distance from the player
@@ -291,7 +263,7 @@ public class EraWarlock : Rotation
                 // without triggering a premature exit
             }
         }
-       
+
         if (Api.Spellbook.CanCast("Drain Soul") && Api.Inventory.ItemCount("Soul Shard") <= 2 && targethealth <= 30 && mana > 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -344,7 +316,7 @@ public class EraWarlock : Rotation
             if (Api.Spellbook.Cast("Corruption"))
                 return true;
         }
-        
+
         if (Api.Spellbook.CanCast("Shadow Bolt") && mana >= 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -383,6 +355,55 @@ public class EraWarlock : Rotation
 
 
         return base.CombatPulse();
+    }
+    public bool UsePotions()
+    {
+        // Check for health potions if health is low
+        if (Api.Player.HealthPercent <= 70)
+        {
+            if (UsePotion("Major Healing Potion")) return true;
+            if (UsePotion("Superior Healing Potion")) return true;
+            if (UsePotion("Greater Healing Potion")) return true;
+            if (UsePotion("Healing Potion")) return true;
+            if (UsePotion("Lesser Healing Potion")) return true;
+            if (UsePotion("Minor Healing Potion")) return true;
+        }
+
+        // Check for mana potions if mana is low
+        if (Api.Player.ManaPercent < 30)
+        {
+            if (UsePotion("Major Mana Potion")) return true;
+            if (UsePotion("Superior Mana Potion")) return true;
+            if (UsePotion("Greater Mana Potion")) return true;
+            if (UsePotion("Mana Potion")) return true;
+            if (UsePotion("Lesser Mana Potion")) return true;
+            if (UsePotion("Minor Mana Potion")) return true;
+        }
+
+        return false; // No potions were used
+    }
+
+    private bool UsePotion(string potionName)
+    {
+        int potionCount = Api.Inventory.ItemCount(potionName);
+
+        // Check cooldown for potions
+        bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
+
+        if (potionCount > 0 && !isOnCooldown)
+        {
+            Console.ForegroundColor = potionName.Contains("Mana") ? ConsoleColor.Cyan : ConsoleColor.Green;
+            Console.WriteLine($"Using {potionName}.");
+            Console.ResetColor();
+
+            if (Api.Inventory.Use(potionName))
+            {
+                potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                return true; // Exit early after using the potion
+            }
+        }
+
+        return false; // Potion was not used
     }
     private bool IsNPC(WowUnit unit)
     {
@@ -485,6 +506,47 @@ public class EraWarlock : Rotation
             Console.WriteLine("Can Cast Create Healthstone (Lesser)");
             Console.ResetColor();
         }
+        // Log available health potions
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("Available Health Potions:");
+        LogPotionCount("Major Healing Potion");
+        LogPotionCount("Superior Healing Potion");
+        LogPotionCount("Greater Healing Potion");
+        LogPotionCount("Healing Potion");
+        LogPotionCount("Lesser Healing Potion");
+        LogPotionCount("Minor Healing Potion");
+        Console.ResetColor();
 
+        // Log available mana potions
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("Available Mana Potions:");
+        LogPotionCount("Major Mana Potion");
+        LogPotionCount("Superior Mana Potion");
+        LogPotionCount("Greater Mana Potion");
+        LogPotionCount("Mana Potion");
+        LogPotionCount("Lesser Mana Potion");
+        LogPotionCount("Minor Mana Potion");
+        Console.ResetColor();
+
+        // Log potion cooldown timer
+        if (potionCooldowns.ContainsKey("Potion"))
+        {
+            var cooldownRemaining = 130 - (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds;
+            if (cooldownRemaining > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine($"Potion cooldown remaining: {Math.Ceiling(cooldownRemaining)} seconds");
+                Console.ResetColor();
+            }
+        }
+    }
+    private void LogPotionCount(string potionName)
+    {
+        int count = Api.Inventory.ItemCount(potionName);
+        Console.WriteLine($"Checking {potionName}: {count}");
+        if (count > 0)
+        {
+            Console.WriteLine($"{potionName}: {count}");
+        }
     }
 }
