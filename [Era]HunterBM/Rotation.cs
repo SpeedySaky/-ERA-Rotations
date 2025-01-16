@@ -450,28 +450,7 @@ public class EraHunter : Rotation
         return false; // No potions were used
     }
 
-    private bool UsePotion(string potionName)
-    {
-        int potionCount = Api.Inventory.ItemCount(potionName);
-
-        // Check cooldown for potions
-        bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
-
-        if (potionCount > 0 && !isOnCooldown)
-        {
-            Console.ForegroundColor = potionName.Contains("Mana") ? ConsoleColor.Cyan : ConsoleColor.Green;
-            Console.WriteLine($"Using {potionName}.");
-            Console.ResetColor();
-
-            if (Api.Inventory.Use(potionName))
-            {
-                potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
-                return true; // Exit early after using the potion
-            }
-        }
-
-        return false; // Potion was not used
-    }
+    
     private bool IsNPC(WowUnit unit)
     {
         if (!IsValid(unit))
