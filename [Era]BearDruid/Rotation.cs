@@ -46,8 +46,8 @@ public class EraBearDruid : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 600;
-        FastTick = 150;
+        SlowTick = 750;
+        FastTick = 300;
 
         // You can also use this method to add to various action lists.
 
@@ -199,7 +199,7 @@ public class EraBearDruid : Rotation
             return true;
         }
     }
-    if (rage >= 10 && Api.Spellbook.CanCast("Frenzied Regeneration") && healthPercentage <= 40 && !Api.Spellbook.OnCooldown("Frenzied Regeneration") && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+    if (rage >= 10 && Api.Spellbook.CanCast("Frenzied Regeneration") && healthPercentage <= 40 && !Api.Spellbook.OnCooldown("Frenzied Regeneration") && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Frenzied Regeneration");
@@ -219,7 +219,7 @@ public class EraBearDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Survival Instincts") && !Api.Spellbook.OnCooldown("Survival Instincts") && Api.UnfriendlyUnitsNearby(5, true) >= 2 && healthPercentage <= 40)
+        if (Api.Spellbook.CanCast("Survival Instincts") && !Api.Spellbook.OnCooldown("Survival Instincts") && Api.UnitsTargetingMe(5, true).Length >= 2 && healthPercentage <= 40)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Survival Instincts");
@@ -229,7 +229,7 @@ public class EraBearDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Barkskin") && !Api.Spellbook.OnCooldown("Barkskin") && Api.UnfriendlyUnitsNearby(5, true) >= 2 && healthPercentage <= 40 && mana>20)
+        if (Api.Spellbook.CanCast("Barkskin") && !Api.Spellbook.OnCooldown("Barkskin") && Api.UnitsTargetingMe(5, true).Length >= 2 && healthPercentage <= 40 && mana>20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Barkskin");
@@ -315,7 +315,7 @@ public class EraBearDruid : Rotation
             }
         }
 
-        if (rage >= 10 && Api.Spellbook.CanCast("Swipe"))
+        if (rage >= 10 && Api.Spellbook.CanCast("Swipe") && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Swipe");
