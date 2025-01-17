@@ -283,18 +283,10 @@ public class EraRetPala : Rotation
 
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
-
-        string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
-        string[] MP = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
-
         if (UsePotions())
         {
             return true; // Exit early if a potion was used
         }
-
-
-
-
 
         if (Api.Spellbook.CanCast("Sanctity Aura") && !me.Auras.Contains("Sanctity Aura", false))
         {
@@ -307,8 +299,7 @@ public class EraRetPala : Rotation
                 return true;
             }
         }
-        else
-         if (Api.Spellbook.CanCast("Devotion Aura") && !me.Auras.Contains("Devotion Aura", false) && !me.Auras.Contains("Sanctity Aura", false))
+        else if (Api.Spellbook.CanCast("Devotion Aura") && !me.Auras.Contains("Devotion Aura", false) && !me.Auras.Contains("Sanctity Aura", false))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Devotion Aura");
@@ -319,7 +310,8 @@ public class EraRetPala : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Divine Protection") && Api.Player.HealthPercent < 45 && !me.IsCasting() && !Api.Player.Auras.Contains("Forbearance", false) && !Api.Spellbook.OnCooldown("Divine Protection"))
+
+        if (Api.Spellbook.CanCast("Divine Protection") && healthPercentage < 45 && !me.IsCasting() && !me.Auras.Contains("Forbearance") && !Api.Spellbook.OnCooldown("Divine Protection"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Divine Protection");
@@ -341,7 +333,7 @@ public class EraRetPala : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Blessing of Protection") && Api.Player.HealthPercent < 30 && !me.IsCasting() && !Api.Player.Auras.Contains("Forbearance", false) && !Api.Spellbook.OnCooldown("Blessing of Protection"))
+        if (Api.Spellbook.CanCast("Blessing of Protection") && healthPercentage < 30 && !me.IsCasting() && !me.Auras.Contains("Forbearance") && !Api.Spellbook.OnCooldown("Blessing of Protection"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Blessing of Protection");
@@ -352,7 +344,7 @@ public class EraRetPala : Rotation
             }
         }
 
-        if (Api.Player.Auras.Contains("Blessing of Protection") && healthPercentage <= 35 && Api.Spellbook.CanCast("Holy Light") && mana > 20)
+        if (me.Auras.Contains("Blessing of Protection") && healthPercentage <= 35 && Api.Spellbook.CanCast("Holy Light") && mana > 20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Holy Light");
@@ -362,6 +354,7 @@ public class EraRetPala : Rotation
                 return true;
             }
         }
+
         if (healthPercentage <= 10 && Api.Spellbook.CanCast("Lay on Hands") && !Api.Spellbook.OnCooldown("Lay on Hands"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -379,10 +372,22 @@ public class EraRetPala : Rotation
             Console.WriteLine("Casting Holy Light");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Holy Light"))
-
+            {
                 return true;
-
+            }
         }
+
+        if (Api.Spellbook.CanCast("Flash of Light") && healthPercentage <= 70 && mana > 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Flash of Light");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Flash of Light"))
+            {
+                return true;
+            }
+        }
+
         CreatureType targetCreatureType = GetCreatureType(target);
 
         if (Api.Spellbook.CanCast("Exorcism") && targetDistance <= 30 && (targetCreatureType == CreatureType.Undead || targetCreatureType == CreatureType.Demon) && mana >= 80)
@@ -393,7 +398,17 @@ public class EraRetPala : Rotation
             if (Api.Spellbook.Cast("Exorcism"))
                 return true;
         }
-        if (Api.Spellbook.CanCast("Hammer of Wrath") && targetHealth <= 20)
+
+        if (Api.Spellbook.CanCast("Holy Wrath") && targetDistance <= 10 && (targetCreatureType == CreatureType.Undead || targetCreatureType == CreatureType.Demon) && mana >= 50)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Holy Wrath");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Holy Wrath"))
+                return true;
+        }
+
+        if (Api.Spellbook.CanCast("Hammer of Wrath") && targetHealth <= 20 && mana >20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Hammer of Wrath");
@@ -404,16 +419,15 @@ public class EraRetPala : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Consecration") && !Api.Spellbook.OnCooldown("Consecration") && targethp >= 30 && mana > 30 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        if (Api.Spellbook.CanCast("Consecration") && !Api.Spellbook.OnCooldown("Consecration") && targethp >= 30 && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Consecration");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Consecration"))
-
                 return true;
-
         }
+
         if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && mana > 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -422,15 +436,14 @@ public class EraRetPala : Rotation
             if (Api.Spellbook.Cast("Seal of Command"))
                 return true;
         }
+
         if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !Api.Spellbook.OnCooldown("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana < 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Wisdom");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Seal of Wisdom"))
-
                 return true;
-
         }
         else if (!me.Auras.Contains("Seal of Righteousness") && Api.Spellbook.CanCast("Seal of Righteousness") && !Api.Spellbook.OnCooldown("Seal of Righteousness") && !me.Auras.Contains("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 30)
         {
@@ -438,9 +451,7 @@ public class EraRetPala : Rotation
             Console.WriteLine("Casting Seal of Righteousness");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Seal of Righteousness"))
-
                 return true;
-
         }
 
         if (Api.Spellbook.CanCast("Hammer of Justice") && mana > 10 && !Api.Spellbook.OnCooldown("Hammer of Justice") && (target.IsCasting() || target.IsChanneling()))
@@ -454,7 +465,6 @@ public class EraRetPala : Rotation
             }
         }
 
-
         if (Api.Spellbook.CanCast("Judgement") && mana > 15 && !Api.Spellbook.OnCooldown("Judgement") && (me.Auras.Contains("Seal of Righteousness") || me.Auras.Contains("Seal of Wisdom") || me.Auras.Contains("Seal of Command")))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -465,7 +475,6 @@ public class EraRetPala : Rotation
                 return true;
             }
         }
-
 
         if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
         {
@@ -478,10 +487,9 @@ public class EraRetPala : Rotation
             }
         }
 
-        //DPS rotation
-
         return base.CombatPulse();
     }
+
 
     public bool UsePotions()
     {

@@ -248,7 +248,7 @@ public class Warrior : Rotation
         }
 
         CreatureType targetCreatureType = GetCreatureType(target);
-        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend") && rage > 10 && targetCreatureType != CreatureType.Mechanical)
+        if (Api.Spellbook.CanCast("Rend") && targethealth >= 30 && !target.Auras.Contains("Rend") && rage > 10 && targetCreatureType != CreatureType.Mechanical && targetCreatureType != CreatureType.Undead)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Rend");

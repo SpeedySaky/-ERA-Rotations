@@ -101,9 +101,6 @@ public class ERAProtPala : Rotation
                 }
             }
         }
-      
-
-       
 
         return base.PassivePulse();
     }
@@ -142,7 +139,57 @@ public class ERAProtPala : Rotation
                 return true;
             }
         }
-       if (!target.Auras.Contains("Judgement of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !me.Auras.Contains("Seal of the Wisdom") && mana > 5)
+
+        if (Api.Spellbook.CanCast("Avenger's Shield") && !Api.Spellbook.OnCooldown("Avenger's Shield") && mana > 20)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Avenger's Shield");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Avenger's Shield"))
+            {
+                return true;
+            }
+        }
+
+        if (Api.Spellbook.CanCast("Hammer of Justice") && !Api.Spellbook.OnCooldown("Hammer of Justice") && mana > 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Hammer of Justice");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Hammer of Justice"))
+            {
+                return true;
+            }
+        }
+
+        if (Api.Spellbook.CanCast("Exorcism") && !Api.Spellbook.OnCooldown("Exorcism") && (GetCreatureType(target) == CreatureType.Undead || GetCreatureType(target) == CreatureType.Demon) && mana > 15)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Exorcism");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Exorcism"))
+            {
+                return true;
+            }
+        }
+
+        if (Api.Spellbook.CanCast("Lay on Hands") && healthPercentage <= 10 && !Api.Spellbook.OnCooldown("Lay on Hands"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Lay on Hands");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Lay on Hands"))
+            {
+                return true;
+            }
+        }
+
+       
+        if (!target.Auras.Contains("Judgement of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !me.Auras.Contains("Seal of Wisdom") && mana > 5)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Wisdom");
@@ -150,7 +197,8 @@ public class ERAProtPala : Rotation
             if (Api.Spellbook.Cast("Seal of Wisdom"))
                 return true;
         }
-      if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Righteousness") && !me.Auras.Contains("Seal of Righteousness") && mana > 30)
+
+        if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Righteousness") && !me.Auras.Contains("Seal of Righteousness") && mana > 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Righteousness");
@@ -169,17 +217,15 @@ public class ERAProtPala : Rotation
                 return true;
             }
         }
-		if (Api.Spellbook.CanCast("Consecration") && !Api.Spellbook.OnCooldown("Consecration") && targethp >= 30 && mana > 30 && Api.UnitsTargetingMe(5, true).Length >= 2)
+
+        if (Api.Spellbook.CanCast("Consecration") && !Api.Spellbook.OnCooldown("Consecration") && targethp >= 30 && mana > 30 && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Consecration");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Consecration"))
-
                 return true;
-
         }
-      
 
         if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
         {

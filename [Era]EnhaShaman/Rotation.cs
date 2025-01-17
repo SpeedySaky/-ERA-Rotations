@@ -319,55 +319,7 @@ public class EnhaShaman : Rotation
         return base.CombatPulse();
     }
 
-    public bool UsePotions()
-    {
-        // Check for health potions if health is low
-        if (Api.Player.HealthPercent <= 70)
-        {
-            if (UsePotion("Major Healing Potion")) return true;
-            if (UsePotion("Superior Healing Potion")) return true;
-            if (UsePotion("Greater Healing Potion")) return true;
-            if (UsePotion("Healing Potion")) return true;
-            if (UsePotion("Lesser Healing Potion")) return true;
-            if (UsePotion("Minor Healing Potion")) return true;
-        }
-
-        // Check for mana potions if mana is low
-        if (Api.Player.ManaPercent < 30)
-        {
-            if (UsePotion("Major Mana Potion")) return true;
-            if (UsePotion("Superior Mana Potion")) return true;
-            if (UsePotion("Greater Mana Potion")) return true;
-            if (UsePotion("Mana Potion")) return true;
-            if (UsePotion("Lesser Mana Potion")) return true;
-            if (UsePotion("Minor Mana Potion")) return true;
-        }
-
-        return false; // No potions were used
-    }
-
-    private bool UsePotion(string potionName)
-    {
-        int potionCount = Api.Inventory.ItemCount(potionName);
-
-        // Check cooldown for potions
-        bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
-
-        if (potionCount > 0 && !isOnCooldown)
-        {
-            Console.ForegroundColor = potionName.Contains("Mana") ? ConsoleColor.Cyan : ConsoleColor.Green;
-            Console.WriteLine($"Using {potionName}.");
-            Console.ResetColor();
-
-            if (Api.Inventory.Use(potionName))
-            {
-                potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
-                return true; // Exit early after using the potion
-            }
-        }
-
-        return false; // Potion was not used
-    }
+    
     private bool HasAnyRockbiterEnchantment(EquipmentSlot slot)
     {
         return HasEnchantment(slot, "Rockbiter 7") || HasEnchantment(slot, "Rockbiter 6") || HasEnchantment(slot, "Rockbiter 5") || HasEnchantment(slot, "Rockbiter 4") || HasEnchantment(slot, "Rockbiter 3") || HasEnchantment(slot, "Rockbiter 2") || HasEnchantment(slot, "Rockbiter 1");
