@@ -58,7 +58,7 @@ public class EraRetPala : Rotation
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
         SlowTick = 750;
-        FastTick = 500;
+        FastTick = 300;
 
         // You can also use this method to add to various action lists.
 
@@ -98,119 +98,128 @@ public class EraRetPala : Rotation
 
 
 
-        if (me.IsValid())
+
+        if (Api.Spellbook.CanCast("Holy Light") && healthPercentage <= 50 && mana > 20)
         {
-            if (Api.Spellbook.CanCast("Holy Light") && healthPercentage <= 50 && mana > 20)
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Holy Light");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Holy Light"))
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Holy Light");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Holy Light"))
-                {
-                    return true;
-                }
+                return true;
             }
-            var hasDisease = me.Auras.Contains("Contagion of Rot") ||
-                                  me.Auras.Contains("Bonechewer Rot") ||
-                                  me.Auras.Contains("Ghoul Rot") ||
-                                  me.Auras.Contains("Maggot Slime") ||
-                                  me.Auras.Contains("Corrupted Strength") ||
-                                  me.Auras.Contains("Corrupted Agility") ||
-                                  me.Auras.Contains("Corrupted Intellect") ||
-                                  me.Auras.Contains("Corrupted Stamina") ||
-                                  me.Auras.Contains("Black Rot") ||
-                                  me.Auras.Contains("Volatile Infection") ||
-                                  me.Auras.Contains("Ghoul Plague") ||
-                                  me.Auras.Contains("Corrupting Plague") ||
-                                  me.Auras.Contains("Lacerating Bite") ||
-                                  me.Auras.Contains("Sporeskin") ||
-                                  me.Auras.Contains("Cadaver Worms") ||
-                                  me.Auras.Contains("Rabies") ||
-                                  me.Auras.Contains("Diseased Shot") ||
-                                  me.Auras.Contains("Tetanus") ||
-                                  me.Auras.Contains("Dredge Sickness") ||
-                                  me.Auras.Contains("Noxious Catalyst") ||
-                                  me.Auras.Contains("Spirit Decay") ||
-                                  me.Auras.Contains("Withered Touch") ||
-                                  me.Auras.Contains("Putrid Enzyme") ||
-                                  me.Auras.Contains("Infected Wound") ||
-                                  me.Auras.Contains("Infected Spine") ||
-                                  me.Auras.Contains("Black Sludge") ||
-                                  me.Auras.Contains("Silithid Pox") ||
-                                  me.Auras.Contains("Festering Rash") ||
-                                  me.Auras.Contains("Dark Sludge") ||
-                                  me.Auras.Contains("Fevered Fatigue") ||
-                                  me.Auras.Contains("Muculent Fever") ||
-                                  me.Auras.Contains("Infected Bite") ||
-                                  me.Auras.Contains("Fungal Decay") ||
-                                  me.Auras.Contains("Diseased Spit") ||
-                                  me.Auras.Contains("Choking Vines") ||
-                                  me.Auras.Contains("Fevered Disease") ||
-                                  me.Auras.Contains("Lingering Vines") ||
-                                  me.Auras.Contains("Festering Wound") ||
-                                  me.Auras.Contains("Creeping Vines") ||
-                                  me.Auras.Contains("Parasite") ||
-                                  me.Auras.Contains("Wandering Plague") ||
-                                  me.Auras.Contains("Irradiated") ||
-                                  me.Auras.Contains("Dark Plague") ||
-                                  me.Auras.Contains("Plague Mind") ||
-                                  me.Auras.Contains("Diseased Slime") ||
-                                  me.Auras.Contains("Putrid Stench") ||
-                                  me.Auras.Contains("Wither") ||
-                                  me.Auras.Contains("Seething Plague") ||
-                                  me.Auras.Contains("Death's Door") ||
-                                  me.Auras.Contains("Plague Strike");
-
-            if (hasDisease && Api.Spellbook.CanCast("Purify") && mana > 32)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Have poison debuff casting Purify");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Purify"))
-
-                    return true;
-            }
-
-
-            if (Api.Spellbook.CanCast("Blessing of Might") && !me.Auras.Contains("Blessing of Might") && mana > 15)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Blessing of Might");
-                Console.ResetColor();
-
-                if (Api.Spellbook.Cast("Blessing of Might"))
-                {
-                    return true;
-                }
-            }
-
-
-            if (Api.Spellbook.CanCast("Sanctity Aura") && !me.Auras.Contains("Sanctity Aura", false))
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Sanctity Aura");
-                Console.ResetColor();
-
-                if (Api.Spellbook.Cast("Sanctity Aura"))
-                {
-                    return true;
-                }
-            }
-            else
-            if (Api.Spellbook.CanCast("Devotion Aura") && !me.Auras.Contains("Devotion Aura", false) && !me.Auras.Contains("Sanctity Aura", false))
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Devotion Aura");
-                Console.ResetColor();
-
-                if (Api.Spellbook.Cast("Devotion Aura"))
-                {
-                    return true;
-                }
-            }
-
         }
-        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command"))
+        var hasDisease = me.Auras.Contains("Contagion of Rot") ||
+                              me.Auras.Contains("Bonechewer Rot") ||
+                              me.Auras.Contains("Ghoul Rot") ||
+                              me.Auras.Contains("Maggot Slime") ||
+                              me.Auras.Contains("Corrupted Strength") ||
+                              me.Auras.Contains("Corrupted Agility") ||
+                              me.Auras.Contains("Corrupted Intellect") ||
+                              me.Auras.Contains("Corrupted Stamina") ||
+                              me.Auras.Contains("Black Rot") ||
+                              me.Auras.Contains("Volatile Infection") ||
+                              me.Auras.Contains("Ghoul Plague") ||
+                              me.Auras.Contains("Corrupting Plague") ||
+                              me.Auras.Contains("Lacerating Bite") ||
+                              me.Auras.Contains("Sporeskin") ||
+                              me.Auras.Contains("Cadaver Worms") ||
+                              me.Auras.Contains("Rabies") ||
+                              me.Auras.Contains("Diseased Shot") ||
+                              me.Auras.Contains("Tetanus") ||
+                              me.Auras.Contains("Dredge Sickness") ||
+                              me.Auras.Contains("Noxious Catalyst") ||
+                              me.Auras.Contains("Spirit Decay") ||
+                              me.Auras.Contains("Withered Touch") ||
+                              me.Auras.Contains("Putrid Enzyme") ||
+                              me.Auras.Contains("Infected Wound") ||
+                              me.Auras.Contains("Infected Spine") ||
+                              me.Auras.Contains("Black Sludge") ||
+                              me.Auras.Contains("Silithid Pox") ||
+                              me.Auras.Contains("Festering Rash") ||
+                              me.Auras.Contains("Dark Sludge") ||
+                              me.Auras.Contains("Fevered Fatigue") ||
+                              me.Auras.Contains("Muculent Fever") ||
+                              me.Auras.Contains("Infected Bite") ||
+                              me.Auras.Contains("Fungal Decay") ||
+                              me.Auras.Contains("Diseased Spit") ||
+                              me.Auras.Contains("Choking Vines") ||
+                              me.Auras.Contains("Fevered Disease") ||
+                              me.Auras.Contains("Lingering Vines") ||
+                              me.Auras.Contains("Festering Wound") ||
+                              me.Auras.Contains("Creeping Vines") ||
+                              me.Auras.Contains("Parasite") ||
+                              me.Auras.Contains("Wandering Plague") ||
+                              me.Auras.Contains("Irradiated") ||
+                              me.Auras.Contains("Dark Plague") ||
+                              me.Auras.Contains("Plague Mind") ||
+                              me.Auras.Contains("Diseased Slime") ||
+                              me.Auras.Contains("Putrid Stench") ||
+                              me.Auras.Contains("Wither") ||
+                              me.Auras.Contains("Seething Plague") ||
+                              me.Auras.Contains("Death's Door") ||
+                              me.Auras.Contains("Plague Strike");
+
+        if (hasDisease && Api.Spellbook.CanCast("Purify") && mana > 32)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Have poison debuff casting Purify");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Purify"))
+
+                return true;
+        }
+
+        if (Api.Spellbook.CanCast("Blessing of Wisdom") && !me.Auras.Contains("Blessing of Wisdom") && mana <30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Blessing of Might");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Blessing of Wisdom"))
+            {
+                return true;
+            }
+        }
+        if (Api.Spellbook.CanCast("Blessing of Might") && !me.Auras.Contains("Blessing of Might") && mana > 80)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Blessing of Might");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Blessing of Might"))
+            {
+                return true;
+            }
+        }
+
+
+        if (Api.Spellbook.CanCast("Sanctity Aura") && !me.Auras.Contains("Sanctity Aura", false))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Sanctity Aura");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Sanctity Aura"))
+            {
+                return true;
+            }
+        }
+        else
+        if (Api.Spellbook.CanCast("Devotion Aura") && !me.Auras.Contains("Devotion Aura", false) && !me.Auras.Contains("Sanctity Aura", false))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Devotion Aura");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Devotion Aura"))
+            {
+                return true;
+            }
+        }
+
+
+        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && mana>50)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Command");
@@ -218,7 +227,8 @@ public class EraRetPala : Rotation
             if (Api.Spellbook.Cast("Seal of Command"))
                 return true;
         }
-        if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !Api.Spellbook.OnCooldown("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 15)
+        else
+            if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !Api.Spellbook.OnCooldown("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana <20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Wisdom");
@@ -228,7 +238,8 @@ public class EraRetPala : Rotation
                 return true;
 
         }
-        else if (!me.Auras.Contains("Seal of Righteousness") && Api.Spellbook.CanCast("Seal of Righteousness") && !Api.Spellbook.OnCooldown("Seal of Righteousness") && !me.Auras.Contains("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 15)
+        else
+            if (!me.Auras.Contains("Seal of Righteousness") && Api.Spellbook.CanCast("Seal of Righteousness") && !Api.Spellbook.OnCooldown("Seal of Righteousness") && !me.Auras.Contains("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 50)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Righteousness");
@@ -238,32 +249,27 @@ public class EraRetPala : Rotation
                 return true;
 
         }
+
         var reaction = me.GetReaction(target);
-        if (target.IsValid())
+        if (target.IsValid() && !target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target))
         {
-            if (!target.IsDead() &&
-            (reaction != UnitReaction.Friendly &&
-             reaction != UnitReaction.Honored &&
-             reaction != UnitReaction.Revered &&
-             reaction != UnitReaction.Exalted) &&
-            mana > 20 && !IsNPC(target))
-                if (Api.Spellbook.CanCast("Judgement") && targetDistance > 5 && targetDistance < 10 && targetDistance < 10 && !Api.Spellbook.OnCooldown("Judgement"))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Judgement");
-                    Console.ResetColor();
+            if (Api.Spellbook.CanCast("Judgement") && targetDistance > 5 && targetDistance < 10 && !Api.Spellbook.OnCooldown("Judgement"))
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Casting Judgement");
+                Console.ResetColor();
 
-                    if (Api.Spellbook.Cast("Judgement"))
-                        return true;
-                }
-                else if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
-                {
-                    Api.Spellbook.Cast("Attack");
-                    Console.WriteLine("Attacking");
+                if (Api.Spellbook.Cast("Judgement"))
                     return true;
-                }
-
+            }
+            else if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
+            {
+                Api.Spellbook.Cast("Attack");
+                Console.WriteLine("Attacking");
+                return true;
+            }
         }
+
 
 
         return base.PassivePulse();
@@ -377,20 +383,11 @@ public class EraRetPala : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Flash of Light") && healthPercentage <= 70 && mana > 10)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Flash of Light");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Flash of Light"))
-            {
-                return true;
-            }
-        }
+      
 
         CreatureType targetCreatureType = GetCreatureType(target);
 
-        if (Api.Spellbook.CanCast("Exorcism") && targetDistance <= 30 && (targetCreatureType == CreatureType.Undead || targetCreatureType == CreatureType.Demon) && mana >= 80)
+        if (Api.Spellbook.CanCast("Exorcism") && targetDistance <= 30 && (targetCreatureType == CreatureType.Undead || targetCreatureType == CreatureType.Demon) && mana >= 50)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Exorcism");
@@ -408,7 +405,7 @@ public class EraRetPala : Rotation
                 return true;
         }
 
-        if (Api.Spellbook.CanCast("Hammer of Wrath") && targetHealth <= 20 && mana >20)
+        if (Api.Spellbook.CanCast("Hammer of Wrath") && targetHealth <= 20 && mana > 20)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Hammer of Wrath");
