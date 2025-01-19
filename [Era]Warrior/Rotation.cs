@@ -78,7 +78,7 @@ public class Warrior : Rotation
 
 
 
-        if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (me.IsDead() || me.IsGhost() || me.IsCasting()  || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
         var targetDistance = target.Position.Distance2D(me.Position);
         if ((DateTime.Now - lastDebugTime).TotalSeconds >= debugInterval)
         {
@@ -120,7 +120,7 @@ public class Warrior : Rotation
         var targethealth = target.HealthPercent;
 
         // Check for the DODGE event
-        if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting()  || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
         string[] HP = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
 
@@ -154,6 +154,14 @@ public class Warrior : Rotation
                 lastOverpowerAttempt = DateTime.Now; // Start cooldown even if the cast fails
             }
         }
+        if (Api.Spellbook.CanCast("Execute") && targethealth <= 20 && !Api.Spellbook.OnCooldown("Execute") && rage > 15)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Execute");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Execute"))
+                return true;
+        }
         if (Api.Spellbook.CanCast("Retaliation") && !Api.Spellbook.OnCooldown("Retaliation") && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -171,7 +179,7 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Bloodrage"))
                 return true;
         }
-        if (Api.Spellbook.CanCast("Recklessness") && me.HealthPercent >= 60 && !Api.Spellbook.OnCooldown("Recklessness"))
+        if (Api.Spellbook.CanCast("Recklessness") && me.HealthPercent >= 60 && !Api.Spellbook.OnCooldown("Recklessness") && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Recklessness");
@@ -207,7 +215,7 @@ public class Warrior : Rotation
                 return true;
         }
 
-        if (Api.Spellbook.CanCast("Sweeping Strikes") && Api.UnitsTargetingMe(5, true).Length >= 2 && !Api.Spellbook.OnCooldown("Sweeping Strikes") && rage > 30)
+        if (Api.Spellbook.CanCast("Sweeping Strikes") && Api.UnitsTargetingMe(7, true).Length >= 2 && !Api.Spellbook.OnCooldown("Sweeping Strikes") && rage > 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Casting Sweeping Strikes");
@@ -228,16 +236,9 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Mortal Strike"))
                 return true;
         }
-        if (Api.Spellbook.CanCast("Execute") && targethealth <= 20 && !Api.Spellbook.OnCooldown("Execute") && rage > 15)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Execute");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Execute"))
-                return true;
-        }
+       
         // Cast Rend if appropriate
-        if (Api.Spellbook.CanCast("Whirlwind") && Api.UnitsTargetingMe(5, true).Length >= 2 && !Api.Spellbook.OnCooldown("Whirlwind") && rage > 25)
+        if (Api.Spellbook.CanCast("Whirlwind") && Api.UnitsTargetingMe(7, true).Length >= 2 && !Api.Spellbook.OnCooldown("Whirlwind") && rage > 25)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Casting Sweeping Strikes");
@@ -258,7 +259,7 @@ public class Warrior : Rotation
         }
 
         // Cast Thunder Clap if appropriate
-        if (Api.Spellbook.CanCast("Thunder Clap") && !target.Auras.Contains("Thunder Clap", true) && rage > 20 && targethealth >= 30 && Api.UnitsTargetingMe(5, true).Length >= 2)
+        if (Api.Spellbook.CanCast("Thunder Clap") && !target.Auras.Contains("Thunder Clap", true) && rage > 20 && targethealth >= 30 && Api.UnitsTargetingMe(7, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Thunder Clap");
@@ -276,7 +277,7 @@ public class Warrior : Rotation
             if (Api.Spellbook.Cast("Sunder Armor"))
                 return true;
         }
-        if (Api.Spellbook.CanCast("Cleave") && rage > 20 && Api.UnitsTargetingMe(5, true).Length >= 2)
+        if (Api.Spellbook.CanCast("Cleave") && rage > 20 && Api.UnitsTargetingMe(7, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Cleave");
@@ -285,7 +286,7 @@ public class Warrior : Rotation
                 return true;
         }
         // Cast Heroic Strike if appropriate
-        if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15 && Api.UnfriendlyUnitsNearby(5, true) == 1)
+        if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15 )
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Heroic Strike");

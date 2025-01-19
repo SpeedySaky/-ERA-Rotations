@@ -175,7 +175,7 @@ public class EnhaShaman : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Strength of Earth Totem") && !me.Auras.Contains("Strength of Earth", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) == 1)
+        if (Api.Spellbook.CanCast("Strength of Earth Totem") && !me.Auras.Contains("Strength of Earth", false) && mana > 50 && Api.UnitsTargetingMe(5, true).Length >= 1)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Strength of Earth Totem");
@@ -187,7 +187,7 @@ public class EnhaShaman : Rotation
         }
 
         // Fallback to Stoneskin Totem if Strength of Earth can't be cast
-        if (Api.Spellbook.CanCast("Stoneskin Totem") && !me.Auras.Contains("Stoneskin", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        if (Api.Spellbook.CanCast("Stoneskin Totem") && !me.Auras.Contains("Stoneskin", false) && mana > 50 && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Stoneskin Totem");
@@ -197,7 +197,7 @@ public class EnhaShaman : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Healing Stream Totem") && !me.Auras.Contains("Healing Stream", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        if (Api.Spellbook.CanCast("Healing Stream Totem") && !me.Auras.Contains("Healing Stream", false) && mana > 50 && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Healing Stream Totem");
@@ -227,7 +227,7 @@ public class EnhaShaman : Rotation
                 Console.ResetColor();
             }
         }
-        if (Api.Spellbook.CanCast("Grace of Air Totem") && !me.Auras.Contains("Grace of Air", false) && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        if (Api.Spellbook.CanCast("Grace of Air Totem") && !me.Auras.Contains("Grace of Air", false) && mana > 50 && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Grace of Air Totem");
@@ -271,7 +271,7 @@ public class EnhaShaman : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Flame Shock") && !Api.Spellbook.OnCooldown("Flame Shock") && !target.Auras.Contains("Flame Shock") && mana > 20)
+        if (Api.Spellbook.CanCast("Flame Shock") && !Api.Spellbook.OnCooldown("Flame Shock") && !target.Auras.Contains("Flame Shock") && mana > 40)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Flame Shock");

@@ -219,7 +219,7 @@ public class EraRetPala : Rotation
         }
 
 
-        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && mana>50)
+        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && target.IsValid())
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Command");
@@ -416,7 +416,7 @@ public class EraRetPala : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Consecration") && !Api.Spellbook.OnCooldown("Consecration") && targethp >= 30 && mana > 50 && Api.UnfriendlyUnitsNearby(5, true) >= 2)
+        if (Api.Spellbook.CanCast("Consecration") && !Api.Spellbook.OnCooldown("Consecration") && targethp >= 30 && mana > 50 && Api.UnitsTargetingMe(5, true).Length >= 2)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Consecration");

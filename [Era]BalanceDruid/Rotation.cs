@@ -75,7 +75,7 @@ public class EraBalanceDruid : Rotation
         var target = Api.Target;
         var reaction = me.GetReaction(target);
 
-        if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (me.IsDead() || me.IsGhost() || me.IsCasting() ||  me.IsChanneling() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
         if ((DateTime.Now - lastDebugTime).TotalSeconds >= debugInterval)
         {
             LogPlayerStats();
@@ -122,7 +122,7 @@ public class EraBalanceDruid : Rotation
                     return true;
             }
 
-            if (Api.Spellbook.CanCast("Regrowth") && healthPercentage <= 40 && !me.Auras.Contains("Regrowth"))
+            if (Api.Spellbook.CanCast("Regrowth") && healthPercentage <= 40 && !me.Auras.Contains("Regrowth") && !me.IsMoving())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Regrowth");
@@ -130,7 +130,7 @@ public class EraBalanceDruid : Rotation
                 if (Api.Spellbook.Cast("Regrowth"))
                     return true;
             }
-            if (Api.Spellbook.CanCast("Healing Touch") && healthPercentage <= 30)
+            if (Api.Spellbook.CanCast("Healing Touch") && healthPercentage <= 30 && !me.IsMoving())
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Healing Touch");
@@ -138,7 +138,7 @@ public class EraBalanceDruid : Rotation
                 if (Api.Spellbook.Cast("Healing Touch"))
                     return true;
             }
-            if (Api.Spellbook.CanCast("Moonkin Form") && !me.Auras.Contains("Moonkin Form", false))
+            if (Api.Spellbook.CanCast("Moonkin Form") && !me.Auras.Contains("Moonkin Form", false) && mana >35)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Moonkin Form");
@@ -156,8 +156,8 @@ public class EraBalanceDruid : Rotation
                  reaction != UnitReaction.Exalted) &&
                 mana > 20 && !IsNPC(target))
             {
-
-                if (Api.Spellbook.CanCast("Entangling Roots") && !target.Auras.Contains("Entangling Roots"))
+                 
+                if (Api.Spellbook.CanCast("Entangling Roots") && !target.Auras.Contains("Entangling Roots") && !me.IsMoving())
                 {
 
 
@@ -231,7 +231,15 @@ public class EraBalanceDruid : Rotation
         {
             return true; // Exit early if a potion was used
         }
+        if (Api.Spellbook.CanCast("Moonkin Form") && !me.Auras.Contains("Moonkin Form", false) && mana > 35)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Moonkin Form");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Moonkin Form"))
 
+                return true;
+        }
         if (Api.Spellbook.CanCast("Rejuvenation") && !me.Auras.Contains("Rejuvenation") && healthPercentage <= 70 && mana >= 15)
         {
             Console.ForegroundColor = ConsoleColor.Green;
