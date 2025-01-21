@@ -152,16 +152,7 @@ public class EraHunter : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Aspect of the Cheetah") && !me.Auras.Contains("Aspect of the Cheetah", false) && !me.IsMounted() && !me.Auras.Contains(415423, false))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Aspect of the Cheetah");
-            Console.ResetColor();
-
-            if (Api.Spellbook.Cast("Aspect of the Cheetah"))
-                return true;
-        }
-
+        
         if (IsValid(pet) && PetHealth <= 30 && Api.Spellbook.CanCast("Mend Pet") && !pet.Auras.Contains("Mend Pet") && mana > 20)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -255,7 +246,7 @@ public class EraHunter : Rotation
             if (Api.Spellbook.Cast("Mend Pet"))
                 return true;
         }
-        if (pet.InCombat() && (meTarget == null || target.IsDead()) && !assistedPet) // Check if the player is in combat and has no valid target
+        if (pet.InCombat() && (target == null || target.IsDead()) && !assistedPet)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Assist Pet");
@@ -267,10 +258,14 @@ public class EraHunter : Rotation
                 return true;
             }
         }
-        else if (meTarget != null && !target.IsDead())
+        else if (target != null && !target.IsDead())
         {
             assistedPet = false; // Reset the flag when the player has a valid target
         }
+
+
+
+
 
         // Call Pet Logic
         if ((pet == null || PetHealth == 0) && (DateTime.Now - lastCallPetTime) >= callPetCooldown && Api.Spellbook.CanCast("Call Pet"))
@@ -287,7 +282,7 @@ public class EraHunter : Rotation
         }
 
         // Revive Pet Logic
-        if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Revive Pet") && mana > 70)
+        if ((pet == null) && Api.Spellbook.CanCast("Revive Pet") && mana > 70)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Ressing Pet");
@@ -300,17 +295,37 @@ public class EraHunter : Rotation
         }
 
         // Hunter's Mark Logic
-        if (Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false) && meTarget != null)
+        if (Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false) && meTarget == null)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Mark");
+            Console.WriteLine("Casting AssistPet2");
             Console.ResetColor();
-            if (Api.UseMacro("Mark"))
+            if (Api.UseMacro("AssistPet"))
             {
                 return true;
             }
         }
+        if (Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false) && meTarget != null && !target.IsDead())
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Mark");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Hunter's Mark"))
+            {
+                return true;
+            }
+        }
+        var unitsTargetingMe = Api.UnitsTargetingMe(7, true).Where(unit => unit.Position.Distance2D(me.Position) < 10).ToArray();
 
+        if (unitsTargetingMe.Any(unit => unit == target) && Api.Spellbook.CanCast("Disengage") && mana > 50)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Disengage");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Disengage"))
+                return true;
+        }
         // Melee Logic (if target is within melee range)
         if (targetDistance <= 9)
         {
@@ -347,8 +362,20 @@ public class EraHunter : Rotation
         }
 
         // Ranged abilities when target distance is above 8
-        if (targetDistance >= 8)
+        if (targetDistance >= 8 && meTarget != null && !target.IsDead())
         {
+
+            var unitsTargetingPet = Api.UnitsTargetingMe(5, true).Where(unit => unit.Target() == pet).ToArray();
+            if (unitsTargetingPet.Length >= 2 && Api.Spellbook.HasSpell("Multi-Shot") && !Api.Spellbook.OnCooldown("Multi-Shot") && mana >= 50)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Casting Multi-Shot ");
+                Console.ResetColor();
+
+                if (Api.Spellbook.Cast("Multi-Shot"))
+                    return true;
+            }
+
             if (Api.Spellbook.CanCast("Rapid Fire") && Api.UnfriendlyUnitsNearby(10, true) >= 2 && !Api.Spellbook.OnCooldown("Rapid Fire"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
