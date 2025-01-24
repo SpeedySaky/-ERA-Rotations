@@ -7,7 +7,7 @@ using wShadow.Warcraft.Defines;
 using wShadow.Warcraft.Managers;
 
 
-public class EnhaShaman : Rotation
+public class EraEnhaShaman : Rotation
 {
     private List<string> npcConditions = new List<string>
     {
