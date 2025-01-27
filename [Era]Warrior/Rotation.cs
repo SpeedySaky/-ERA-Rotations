@@ -78,14 +78,14 @@ public class Warrior : Rotation
 
 
 
-        if (me.IsDead() || me.IsGhost() || me.IsCasting()  || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
         var targetDistance = target.Position.Distance2D(me.Position);
         if ((DateTime.Now - lastDebugTime).TotalSeconds >= debugInterval)
         {
             LogPlayerStats();
             lastDebugTime = DateTime.Now;
         }
-        if (!me.Auras.Contains("Battle Stance",false) && Api.Spellbook.CanCast("Battle Stance") )
+        if (!me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Battle Stance"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Battle Stance");
@@ -152,235 +152,231 @@ public class Warrior : Rotation
                 return true;
         }
 
-        // Apply Sunder Armor until the target has at least 2 stacks (only in single-target fights)
-        if (unitsTargetingMe == 1)
-        {
-            if (!me.Auras.Contains("Defensive Stance", false) && Api.Spellbook.CanCast("Defensive Stance") && !target.Auras.Contains("Sunder Armor"))
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Defensive Stance");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Defensive Stance"))
-                    return true;
-            }
 
-            if (me.Auras.Contains("Defensive Stance", false) && Api.Spellbook.CanCast("Sunder Armor") && !target.Auras.Contains("Sunder Armor")  && rage > 15)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Sunder Armor");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Sunder Armor"))
-                    return true;
-            }
+        if (Api.Spellbook.CanCast("Sunder Armor") && !target.Auras.Contains("Sunder Armor") && rage > 15)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Sunder Armor");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Sunder Armor"))
+                return true;
         }
+
 
         // Continue with the rest of the combat rotation
-        if (target.Auras.Contains("Sunder Armor") || unitsTargetingMe > 1)
+        if (!me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Battle Stance"))
         {
-            if (!me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Battle Stance"))
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Switching to Battle Stance");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Battle Stance"))
+                return true;
+        }
+
+        // Switch to Battle Stance if Overpower is available
+        if (DateTime.Now - lastOverpowerAttempt >= overpowerCooldown && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower") && !me.Auras.Contains("Battle Stance", false))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Switching to Battle Stance for Overpower");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Battle Stance"))
+                return true;
+        }
+
+        // Cast Overpower in Battle Stance
+        if (me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower") && DateTime.Now - lastOverpowerAttempt >= overpowerCooldown)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Attempting Overpower at {DateTime.Now}. Conditions: CanCast={Api.Spellbook.CanCast("Overpower")}, Rage={rage}, OnCooldown={Api.Spellbook.OnCooldown("Overpower")}");
+            Console.ResetColor();
+
+            bool castResult = Api.Spellbook.Cast("Overpower"); // Store the result for clarity
+
+            if (castResult)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Switching to Battle Stance");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Battle Stance"))
-                    return true;
-            }
-
-            // Switch to Battle Stance if Overpower is available
-            if (DateTime.Now - lastOverpowerAttempt >= overpowerCooldown && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower") && !me.Auras.Contains("Battle Stance", false))
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Switching to Battle Stance for Overpower");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Battle Stance"))
-                    return true;
-            }
-
-            // Cast Overpower in Battle Stance
-            if (me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower") && DateTime.Now - lastOverpowerAttempt >= overpowerCooldown)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"Attempting Overpower at {DateTime.Now}. Conditions: CanCast={Api.Spellbook.CanCast("Overpower")}, Rage={rage}, OnCooldown={Api.Spellbook.OnCooldown("Overpower")}");
+                Console.WriteLine("Overpower cast successfully!");
                 Console.ResetColor();
 
-                bool castResult = Api.Spellbook.Cast("Overpower"); // Store the result for clarity
-
-                if (castResult)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Overpower cast successfully!");
-                    Console.ResetColor();
-
-                    lastOverpowerAttempt = DateTime.Now; // Set cooldown timer after successful cast
-                    return true;
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("Overpower attempt failed, starting cooldown.");
-                    Console.ResetColor();
-
-                    lastOverpowerAttempt = DateTime.Now; // Start cooldown even if the cast fails
-                }
+                lastOverpowerAttempt = DateTime.Now; // Set cooldown timer after successful cast
+                return true;
             }
-
-            // Switch to Berserker Stance for DPS abilities
-            if (!me.Auras.Contains("Berserker Stance", false) && (Api.Spellbook.CanCast("Whirlwind") || Api.Spellbook.CanCast("Berserker Rage")))
+            else
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Switching to Berserker Stance for DPS");
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Overpower attempt failed, starting cooldown.");
                 Console.ResetColor();
-                if (Api.Spellbook.Cast("Berserker Stance"))
-                    return true;
-            }
 
-            // Cast Execute in Battle Stance or Berserker Stance
-            if ((me.Auras.Contains("Battle Stance", false) || me.Auras.Contains("Berserker Stance", false)) && Api.Spellbook.CanCast("Execute") && targethealth <= 20 && !Api.Spellbook.OnCooldown("Execute") && rage > 15)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Execute");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Execute"))
-                    return true;
-            }
-
-            // Cast Whirlwind in Berserker Stance
-            if (me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Whirlwind") && !Api.Spellbook.OnCooldown("Whirlwind") && rage > 25)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Whirlwind");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Whirlwind"))
-                    return true;
-            }
-
-            // Cast Berserker Rage in Berserker Stance
-            if (me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Rage") && !Api.Spellbook.OnCooldown("Berserker Rage"))
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Berserker Rage");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Berserker Rage"))
-                    return true;
-            }
-
-            // Switch back to Battle Stance if not already in it
-            if (!me.Auras.Contains("Battle Stance", false) && !Api.Spellbook.OnCooldown("Battle Stance"))
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Switching to Battle Stance");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Battle Stance"))
-                    return true;
-            }
-
-            // Cast other abilities in Battle Stance
-            if (me.Auras.Contains("Battle Stance", false))
-            {
-                if (Api.Spellbook.CanCast("Retaliation") && !Api.Spellbook.OnCooldown("Retaliation") && unitsTargetingMe >= 2)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Retaliation");
-                    Console.ResetColor();
-                    if (Api.Spellbook.Cast("Retaliation"))
-                        return true;
-                }
-
-                if (Api.Spellbook.CanCast("Recklessness") && me.HealthPercent >= 60 && !Api.Spellbook.OnCooldown("Recklessness") && unitsTargetingMe >= 2)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Recklessness");
-                    Console.ResetColor();
-                    if (Api.Spellbook.Cast("Recklessness"))
-                        return true;
-                }
-
-                if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring") && rage > 10)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Hamstring");
-                    Console.ResetColor();
-                    if (Api.Spellbook.Cast("Hamstring"))
-                        return true;
-                }
-
-                if (!me.Auras.Contains("Battle Shout") && Api.Spellbook.CanCast("Battle Shout") && rage > 10)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Battle Shout");
-                    Console.ResetColor();
-                    if (Api.Spellbook.Cast("Battle Shout"))
-                        return true;
-                }
-
-                if (!target.Auras.Contains("Demoralizing Shout") && Api.Spellbook.CanCast("Demoralizing Shout") && rage > 10)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Demoralizing Shout");
-                    Console.ResetColor();
-                    if (Api.Spellbook.Cast("Demoralizing Shout"))
-                        return true;
-                }
-
-                if (Api.Spellbook.CanCast("Sweeping Strikes") && unitsTargetingMe >= 2 && !Api.Spellbook.OnCooldown("Sweeping Strikes") && rage > 30)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"Casting Sweeping Strikes");
-                    Console.ResetColor();
-
-                    if (Api.Spellbook.Cast("Sweeping Strikes"))
-                        return true;
-                }
-
-                if (Api.Spellbook.CanCast("Mortal Strike") && rage > 30 && !target.Auras.Contains("Mortal Strike"))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Mortal Strike");
-                    Console.ResetColor();
-                    if (Api.Spellbook.Cast("Mortal Strike"))
-                        return true;
-                }
-
-                if (Api.Spellbook.CanCast("Thunder Clap") && !target.Auras.Contains("Thunder Clap", true) && rage > 20 && targethealth >= 30 && unitsTargetingMe >= 2)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Casting Thunder Clap");
-                    Console.ResetColor();
-                    if (Api.Spellbook.Cast("Thunder Clap"))
-                        return true;
-                }
-            }
-
-            // Cast Cleave if appropriate
-            if (Api.Spellbook.CanCast("Cleave") && rage > 20 && unitsTargetingMe >= 2)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Cleave");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Cleave"))
-                    return true;
-            }
-
-            // Cast Heroic Strike if appropriate
-            if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Heroic Strike");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Heroic Strike"))
-                    return true;
-            }
-
-            // Cast Attack if appropriate
-            if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Attack");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Attack"))
-                    return true;
+                lastOverpowerAttempt = DateTime.Now; // Start cooldown even if the cast fails
             }
         }
+
+        // Switch to Berserker Stance for DPS abilities
+        if (!me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Rage") && unitsTargetingMe >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Switching to Berserker Stance for DPS");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Berserker Stance"))
+                return true;
+        }
+
+        // Cast Execute in Battle Stance or Berserker Stance
+        if ((me.Auras.Contains("Battle Stance", false) || me.Auras.Contains("Berserker Stance", false)) && Api.Spellbook.CanCast("Execute") && targethealth <= 20 && !Api.Spellbook.OnCooldown("Execute") && rage > 15)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Execute");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Execute"))
+                return true;
+        }
+
+        // Cast Whirlwind in Berserker Stance
+        if (me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Whirlwind") && !Api.Spellbook.OnCooldown("Whirlwind") && rage > 25 && unitsTargetingMe >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Whirlwind");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Whirlwind"))
+                return true;
+        }
+
+        // Cast Berserker Rage in Berserker Stance
+        if (me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Rage") && !Api.Spellbook.OnCooldown("Berserker Rage") && unitsTargetingMe >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Berserker Rage");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Berserker Rage"))
+                return true;
+        }
+
+        // Switch back to Battle Stance if not already in it
+        if (!me.Auras.Contains("Battle Stance", false) && !Api.Spellbook.OnCooldown("Battle Stance"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Switching to Battle Stance");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Battle Stance"))
+                return true;
+        }
+        if (Api.Spellbook.CanCast("Sweeping Strikes") && unitsTargetingMe >= 2 && !Api.Spellbook.OnCooldown("Sweeping Strikes") && rage > 30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Casting Sweeping Strikes");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Sweeping Strikes"))
+                return true;
+        }
+        if (Api.Spellbook.CanCast("Cleave") && rage > 20 && unitsTargetingMe >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Cleave");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Cleave"))
+                return true;
+        }
+        // Cast other abilities in Battle Stance
+
+        if (Api.Spellbook.CanCast("Retaliation") && !Api.Spellbook.OnCooldown("Retaliation") && unitsTargetingMe >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Retaliation");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Retaliation"))
+                return true;
+        }
+
+        if (Api.Spellbook.CanCast("Recklessness") && me.HealthPercent >= 60 && !Api.Spellbook.OnCooldown("Recklessness") && unitsTargetingMe >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Recklessness");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Recklessness"))
+                return true;
+        }
+        CreatureType targetCreatureType = GetCreatureType(target);
+
+        if (Api.Spellbook.CanCast("Rend") && (targetCreatureType != CreatureType.Undead || targetCreatureType != CreatureType.Elemental || targetCreatureType != CreatureType.Mechanical) && rage >= 10 && !target.Auras.Contains("Rend"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Rend");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Rend"))
+                return true;
+        }
+        if (Api.Spellbook.CanCast("Hamstring") && targethealth <= 30 && !target.Auras.Contains("Hamstring") && rage > 10 && targetCreatureType == CreatureType.Humanoid)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Hamstring");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Hamstring"))
+                return true;
+        }
+
+        if (!me.Auras.Contains("Battle Shout") && Api.Spellbook.CanCast("Battle Shout") && rage > 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Battle Shout");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Battle Shout"))
+                return true;
+        }
+
+        if (!target.Auras.Contains("Demoralizing Shout") && Api.Spellbook.CanCast("Demoralizing Shout") && rage > 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Demoralizing Shout");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Demoralizing Shout"))
+                return true;
+        }
+
+
+
+        if (Api.Spellbook.CanCast("Mortal Strike") && rage > 30 && !target.Auras.Contains("Mortal Strike"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Mortal Strike");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Mortal Strike"))
+                return true;
+        }
+
+        if (Api.Spellbook.CanCast("Thunder Clap") && !target.Auras.Contains("Thunder Clap", true) && rage > 20 && targethealth >= 30 && unitsTargetingMe >= 2)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Thunder Clap");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Thunder Clap"))
+                return true;
+        }
+
+
+        // Cast Cleave if appropriate
+
+
+        // Cast Heroic Strike if appropriate
+        if (Api.Spellbook.CanCast("Heroic Strike") && rage > 15)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Heroic Strike");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Heroic Strike"))
+                return true;
+        }
+
+        // Cast Attack if appropriate
+        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Attack");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Attack"))
+                return true;
+        }
+
 
         return base.CombatPulse();
     }

@@ -298,7 +298,16 @@ public class EraHunter : Rotation
                 return true;
             }
         }
-
+        if (Api.Spellbook.CanCast("Intimidation") && mana > 8 && !Api.Spellbook.OnCooldown("Intimidation") && (target.IsCasting() || target.IsChanneling()) && pet != null)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Intimidation");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Intimidation"))
+            {
+                return true;
+            }
+        }
         // Hunter's Mark Logic
         if (Api.Spellbook.CanCast("Hunter's Mark") && target != null && !target.Auras.Contains("Hunter's Mark", false) && meTarget == null && me.Level >= 10)
         {
@@ -370,6 +379,15 @@ public class EraHunter : Rotation
         if (targetDistance >= 8 && meTarget != null && !target.IsDead())
         {
             var unitsTargetingPet = Api.UnitsTargetingMe(5, true).Where(unit => unit.Target() == pet).ToArray();
+            if (unitsTargetingPet.Length >= 2 && Api.Spellbook.HasSpell("Bestial Wrath") && !Api.Spellbook.OnCooldown("Bestial Wrath") && mana >= 12 && me.Level >= 10)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Casting Bestial Wrath");
+                Console.ResetColor();
+
+                if (Api.Spellbook.Cast("Bestial Wrath"))
+                    return true;
+            }
             if (unitsTargetingPet.Length >= 2 && Api.Spellbook.HasSpell("Multi-Shot") && !Api.Spellbook.OnCooldown("Multi-Shot") && mana >= 50 && me.Level >= 10)
             {
                 Console.ForegroundColor = ConsoleColor.Green;

@@ -8,6 +8,7 @@ using wShadow.Warcraft.Managers;
 
 public class EraWarlock : Rotation
 {
+    private bool assistedPet = false; //
 
     private bool HasItem(object item)
         => Api.Inventory.HasItem(item);
@@ -75,9 +76,14 @@ public class EraWarlock : Rotation
         var mana = me.ManaPercent;
         var pet = me.Pet();
         var PetHealth = 0.0f;
-        if (IsValid(pet))
+
+        if (!Api.Player.PetGuid.IsEmpty())
         {
-            PetHealth = pet.HealthPercent;
+            pet = Api.Pet;
+            if (IsValid(pet))
+            {
+                PetHealth = pet.HealthPercent;
+            }
         }
         var TargetHealth = 0.0f;
         if (IsValid(target))
@@ -101,7 +107,7 @@ public class EraWarlock : Rotation
 
         if (me.IsValid())
         {
-            if (Api.Spellbook.CanCast("Demon Armor") && !me.Auras.Contains("Demon Armor", false))
+            if (Api.Spellbook.CanCast("Demon Armor") && !me.Auras.Contains("Demon Armor"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Demon Armor");
@@ -110,7 +116,7 @@ public class EraWarlock : Rotation
                 if (Api.Spellbook.Cast("Demon Armor"))
                     return true;
             }
-            if (Api.Spellbook.CanCast("Demon Skin") && !me.Auras.Contains("Demon Armor", false) && !me.Auras.Contains("Demon Skin", false))
+            if (Api.Spellbook.CanCast("Demon Skin") && !me.Auras.Contains("Demon Armor") && !me.Auras.Contains("Demon Skin"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Demon Skin");
@@ -119,8 +125,8 @@ public class EraWarlock : Rotation
                 if (Api.Spellbook.Cast("Demon Skin"))
                     return true;
             }
-
-            if ((!IsValid(pet)) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
+        }
+        if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Summon Voidwalker.");
@@ -131,7 +137,7 @@ public class EraWarlock : Rotation
                     return true;
                 }
             }
-            else if ((!IsValid(pet)) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
+            else if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Summon Imp.");
@@ -144,7 +150,7 @@ public class EraWarlock : Rotation
             }
 
 
-            if (PetHealth < 50 && healthPercentage > 50 && Api.Spellbook.CanCast("Health Funnel"))
+            if (IsValid(pet) && PetHealth < 50 && healthPercentage > 50 && Api.Spellbook.CanCast("Health Funnel"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Healing Pet ");
@@ -165,7 +171,7 @@ public class EraWarlock : Rotation
                     return true;
                 }
             }
-        }
+        
         //string[] healthstoneTypes = { "Minor Healthstone", "Lesser Healthstone", "Healthstone", "Greater Healthstone", "Major Healthstone", "Master Healthstone", "Demonic Healthstone", "Fel Healthstone" };
 
 
@@ -222,9 +228,14 @@ public class EraWarlock : Rotation
         var healthPercentage = me.HealthPercent;
         var pet = me.Pet();
         var PetHealth = 0.0f;
-        if (IsValid(pet))
+
+        if (!Api.Player.PetGuid.IsEmpty())
         {
-            PetHealth = pet.HealthPercent;
+            pet = Api.Pet;
+            if (IsValid(pet))
+            {
+                PetHealth = pet.HealthPercent;
+            }
         }
         if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
@@ -249,19 +260,21 @@ public class EraWarlock : Rotation
 
         var meTarget = me.Target;
 
-        if (meTarget == null || target.IsDead())
+        if (pet != null && pet.InCombat() && (target == null || target.IsDead()) && !assistedPet && me.Level >= 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Assist Pet");
             Console.ResetColor();
 
-            // Use the Target property to set the player's target to the pet's target
             if (Api.UseMacro("AssistPet"))
             {
-                // Successfully assisted the pet, continue rotation
-                // Don't return true here, continue with the rest of the combat logic
-                // without triggering a premature exit
+                assistedPet = true; // Set the flag to true after assisting the pet
+                return true;
             }
+        }
+        else if (target != null && !target.IsDead())
+        {
+            assistedPet = false; // Reset the flag when the player has a valid target
         }
 
         if (Api.Spellbook.CanCast("Drain Soul") && Api.Inventory.ItemCount("Soul Shard") <= 2 && targethealth <= 30 && mana > 10)
