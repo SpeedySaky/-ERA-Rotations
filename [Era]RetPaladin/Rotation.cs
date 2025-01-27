@@ -219,7 +219,7 @@ public class EraRetPala : Rotation
         }
 
 
-        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && target.IsValid())
+        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && target.IsValid() && targetDistance < 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Command");
@@ -228,7 +228,7 @@ public class EraRetPala : Rotation
                 return true;
         }
         else
-            if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !Api.Spellbook.OnCooldown("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana <20)
+            if (!me.Auras.Contains("Seal of Wisdom") && Api.Spellbook.CanCast("Seal of Wisdom") && !Api.Spellbook.OnCooldown("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana <20 && targetDistance < 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Wisdom");
@@ -239,7 +239,7 @@ public class EraRetPala : Rotation
 
         }
         else
-            if (!me.Auras.Contains("Seal of Righteousness") && Api.Spellbook.CanCast("Seal of Righteousness") && !Api.Spellbook.OnCooldown("Seal of Righteousness") && !me.Auras.Contains("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 50)
+            if (!me.Auras.Contains("Seal of Righteousness") && Api.Spellbook.CanCast("Seal of Righteousness") && !Api.Spellbook.OnCooldown("Seal of Righteousness") && !me.Auras.Contains("Seal of Wisdom") && !me.Auras.Contains("Seal of Command") && mana > 50 && targetDistance < 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Righteousness");
@@ -462,7 +462,12 @@ public class EraRetPala : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Judgement") && mana > 15 && !Api.Spellbook.OnCooldown("Judgement") && (me.Auras.Contains("Seal of Righteousness") || me.Auras.Contains("Seal of Wisdom") || me.Auras.Contains("Seal of Command")))
+        var unitAuras = new C_UnitAuras(me); // Create an instance of C_UnitAuras with the player as the unit
+
+        if (Api.Spellbook.CanCast("Judgement") && mana > 15 && !Api.Spellbook.OnCooldown("Judgement") &&
+            (me.Auras.Contains("Seal of Righteousness") && unitAuras.TimeRemaining("Seal of Righteousness") < 10000 ||
+             me.Auras.Contains("Seal of Wisdom") && unitAuras.TimeRemaining("Seal of Wisdom") < 10000 ||
+             me.Auras.Contains("Seal of Command") && unitAuras.TimeRemaining("Seal of Command") < 10000))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Judgement");
