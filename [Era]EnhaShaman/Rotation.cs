@@ -111,7 +111,7 @@ public class EraEnhaShaman : Rotation
                 }
             }
 
-            if (Api.Spellbook.CanCast("Lightning Shield") && !me.Auras.Contains("Lightning Shield") && mana > 30)
+            if (Api.Spellbook.CanCast("Lightning Shield") && !me.Auras.Contains("Lightning Shield") && mana > 30 && !me.Auras.Contains("Ghost Wolf", false))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Lighting Shield");
