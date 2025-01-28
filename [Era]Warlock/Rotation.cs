@@ -8,7 +8,8 @@ using wShadow.Warcraft.Managers;
 
 public class EraWarlock : Rotation
 {
-    private bool assistedPet = false; //
+    private bool assistedPet = false;
+    private DateTime lastAssistPetLogTime = DateTime.MinValue; // Add this field
 
     private bool HasItem(object item)
         => Api.Inventory.HasItem(item);
@@ -260,20 +261,74 @@ public class EraWarlock : Rotation
 
         var meTarget = me.Target;
 
+        // Improved Assist Pet Logic
         if (pet != null && pet.InCombat() && (target == null || target.IsDead()) && !assistedPet && me.Level >= 10)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Assist Pet");
-            Console.ResetColor();
-
-            if (Api.UseMacro("AssistPet"))
+            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
             {
-                assistedPet = true; // Set the flag to true after assisting the pet
-                return true;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Assist Pet");
+                Console.ResetColor();
+                lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+            }
+
+            // Check if the pet has a target and assist the pet
+            var petTarget = pet.Target();
+            if (petTarget != null && petTarget.IsValid() && !petTarget.IsDead())
+            {
+                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"Pet has a valid target: {petTarget.Name}");
+                    Console.ResetColor();
+                    lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                }
+
+                if (Api.UseMacro("AssistPet"))
+                {
+                    if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Successfully assisted pet");
+                        Console.ResetColor();
+                        lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                    }
+
+                    assistedPet = true; // Set the flag to true after assisting the pet
+                    return true;
+                }
+                else
+                {
+                    if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Failed to assist pet");
+                        Console.ResetColor();
+                        lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                    }
+                }
+            }
+            else
+            {
+                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Pet does not have a valid target or target is dead");
+                    Console.ResetColor();
+                    lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                }
             }
         }
         else if (target != null && !target.IsDead())
         {
+            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Player has a valid target, resetting assistedPet flag");
+                Console.ResetColor();
+                lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+            }
+
             assistedPet = false; // Reset the flag when the player has a valid target
         }
 

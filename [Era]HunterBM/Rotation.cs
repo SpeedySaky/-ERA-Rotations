@@ -11,7 +11,7 @@ using System.Linq;
 
 public class EraHunter : Rotation
 {
-
+    private DateTime lastAssistPetLogTime = DateTime.MinValue; // Add this field
     private bool HasEnchantment(EquipmentSlot slot, string enchantmentName)
     {
         return Api.Equipment.HasEnchantment(slot, enchantmentName);
@@ -135,7 +135,7 @@ public class EraHunter : Rotation
             }
         }
 
-        if (IsValid(pet) && (DateTime.Now - lastFeedTime).TotalMinutes >= 5 && Api.HasMacro("Feed") && me.Level >= 10)
+        if (IsValid(pet) && PetHealth > 1 && (DateTime.Now - lastFeedTime).TotalMinutes >= 5 && Api.HasMacro("Feed") && me.Level >= 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Feeding pet.");
@@ -247,7 +247,7 @@ public class EraHunter : Rotation
         {
             return true; // Exit early if a potion was used
         }
-        if (PetHealth <= 30 && Api.Spellbook.CanCast("Mend Pet") && mana > 20 && petDistance <= 25 && me.Level >= 10)
+        if (PetHealth > 0 && PetHealth <= 30 && Api.Spellbook.CanCast("Mend Pet") && mana > 20 && petDistance <= 25 && me.Level >= 10)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Pet health is low healing him");
@@ -255,23 +255,92 @@ public class EraHunter : Rotation
             if (Api.Spellbook.Cast("Mend Pet"))
                 return true;
         }
+
+        // Improved Assist Pet Logic
         if (pet != null && pet.InCombat() && (target == null || target.IsDead()) && !assistedPet && me.Level >= 10)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Assist Pet");
-            Console.ResetColor();
-
-            if (Api.UseMacro("AssistPet"))
+            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
             {
-                assistedPet = true; // Set the flag to true after assisting the pet
-                return true;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Assist Pet");
+                Console.ResetColor();
+                lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+            }
+
+            // Check if the pet has a target and assist the pet
+            var petTarget = pet.Target();
+            if (petTarget != null && petTarget.IsValid() && !petTarget.IsDead())
+            {
+                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"Pet has a valid target: {petTarget.Name}");
+                    Console.ResetColor();
+                    lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                }
+
+                if (Api.UseMacro("AssistPet"))
+                {
+                    if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Successfully assisted pet");
+                        Console.ResetColor();
+                        lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                    }
+
+                    assistedPet = true; // Set the flag to true after assisting the pet
+                    return true;
+                }
+                else
+                {
+                    if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Failed to assist pet");
+                        Console.ResetColor();
+                        lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                    }
+                }
+            }
+            else
+            {
+                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Pet does not have a valid target or target is dead");
+                    Console.ResetColor();
+                    lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                }
             }
         }
         else if (target != null && !target.IsDead())
         {
+            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Player has a valid target, resetting assistedPet flag");
+                Console.ResetColor();
+                lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+            }
+
             assistedPet = false; // Reset the flag when the player has a valid target
         }
+        if (IsValid(pet) && targetDistance <= 35 && !target.IsDead() && !target.Auras.Contains("Hunter's Mark", false) && Api.Spellbook.CanCast("Hunter's Mark") && !target.Auras.Contains("Hunter's Mark", false) && me.Level >= 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Marking and sending pet for target.");
+            Console.ResetColor();
 
+            if (Api.UseMacro("Mark"))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Successfully cast Hunter's Mark.");
+                Console.ResetColor();
+
+                return true;
+            }
+        }
         // Call Pet Logic
         if ((pet == null || PetHealth == 0) && (DateTime.Now - lastCallPetTime) >= callPetCooldown && Api.Spellbook.CanCast("Call Pet") && me.Level >= 10)
         {
@@ -298,16 +367,7 @@ public class EraHunter : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Intimidation") && mana > 8 && !Api.Spellbook.OnCooldown("Intimidation") && (target.IsCasting() || target.IsChanneling()) && pet != null)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Intimidation");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Intimidation"))
-            {
-                return true;
-            }
-        }
+
         // Hunter's Mark Logic
         if (Api.Spellbook.CanCast("Hunter's Mark") && target != null && !target.Auras.Contains("Hunter's Mark", false) && meTarget == null && me.Level >= 10)
         {
@@ -329,6 +389,19 @@ public class EraHunter : Rotation
                 return true;
             }
         }
+
+        // Improved Bestial Wrath Logic
+        var unitsTargetingPet = Api.Units.Where(unit => unit.Target() == pet).ToArray();
+        if (unitsTargetingPet.Length >= 2 && Api.Spellbook.HasSpell("Bestial Wrath") && !Api.Spellbook.OnCooldown("Bestial Wrath") && mana >= 12 && me.Level >= 10)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Casting Bestial Wrath");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Bestial Wrath"))
+                return true;
+        }
+
         var unitsTargetingMe = Api.UnitsTargetingMe(7, true).Where(unit => unit.Position.Distance2D(me.Position) < 10).ToArray();
 
         if (unitsTargetingMe.Any(unit => unit == target) && Api.Spellbook.CanCast("Disengage") && mana > 50)
@@ -378,16 +451,6 @@ public class EraHunter : Rotation
         // Ranged abilities when target distance is above 8
         if (targetDistance >= 8 && meTarget != null && !target.IsDead())
         {
-            var unitsTargetingPet = Api.UnitsTargetingMe(5, true).Where(unit => unit.Target() == pet).ToArray();
-            if (unitsTargetingPet.Length >= 2 && Api.Spellbook.HasSpell("Bestial Wrath") && !Api.Spellbook.OnCooldown("Bestial Wrath") && mana >= 12 && me.Level >= 10)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"Casting Bestial Wrath");
-                Console.ResetColor();
-
-                if (Api.Spellbook.Cast("Bestial Wrath"))
-                    return true;
-            }
             if (unitsTargetingPet.Length >= 2 && Api.Spellbook.HasSpell("Multi-Shot") && !Api.Spellbook.OnCooldown("Multi-Shot") && mana >= 50 && me.Level >= 10)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -459,11 +522,6 @@ public class EraHunter : Rotation
 
         return base.CombatPulse();
     }
-
-
-
-
-
 
     private bool IsNPC(WowUnit unit)
     {
