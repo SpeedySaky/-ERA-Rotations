@@ -385,6 +385,7 @@ public class EraFrostMage : Rotation
 
     public bool UsePotions()
     {
+        // Check for health potions if health is low
         if (Api.Player.HealthPercent <= 70)
         {
             if (UsePotion("Major Healing Potion")) return true;
@@ -395,6 +396,7 @@ public class EraFrostMage : Rotation
             if (UsePotion("Minor Healing Potion")) return true;
         }
 
+        // Check for mana potions if mana is low
         if (Api.Player.ManaPercent < 30)
         {
             if (UsePotion("Major Mana Potion")) return true;
@@ -405,36 +407,45 @@ public class EraFrostMage : Rotation
             if (UsePotion("Minor Mana Potion")) return true;
         }
 
-        return false;
+        return false; // No potions were used
     }
 
     private bool UsePotion(string potionName)
     {
         int potionCount = Api.Inventory.ItemCount(potionName);
+
+        // Check cooldown for potions
         bool isOnCooldown = potionCooldowns.ContainsKey("Potion") && (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds < 130;
 
         if (potionCount > 0 && !isOnCooldown)
         {
-            Console.ForegroundColor = potionName.contains("Mana") ? ConsoleColor.Cyan : ConsoleColor.Green;
+            Console.ForegroundColor = potionName.Contains("Mana") ? ConsoleColor.Cyan : ConsoleColor.Green;
             Console.WriteLine($"Using {potionName}.");
             Console.ResetColor();
 
             if (Api.Inventory.Use(potionName))
             {
-                potionCooldowns["Potion"] = DateTime.Now;
-                return true;
+                potionCooldowns["Potion"] = DateTime.Now; // Update the cooldown
+                return true; // Exit early after using the potion
             }
         }
 
-        return false;
+        return false; // Potion was not used
     }
+
+
 
     private void LogPlayerStats()
     {
+        // Variables for player and target instances
         var me = Api.Player;
         var target = Api.Target;
         var mana = me.Mana;
+
+        // Health percentage of the player
         var healthPercentage = me.HealthPercent;
+
+        // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
 
         Console.ForegroundColor = ConsoleColor.Red;
@@ -442,23 +453,25 @@ public class EraFrostMage : Rotation
         Console.WriteLine($"{healthPercentage}% Health available");
         Console.ResetColor();
 
-        if (me.Auras.Contains("Frost Armor"))
+        if (me.Auras.Contains("Frost Armor")) // Replace "Thorns" with the actual aura name
         {
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.ResetColor();
             var remainingTimeSeconds = me.Auras.TimeRemaining("Frost Armor");
-            var remainingTimeMinutes = remainingTimeSeconds / 60;
-            var roundedMinutes = Math.Round(remainingTimeMinutes / 1000, 1);
+            var remainingTimeMinutes = remainingTimeSeconds / 60; // Convert seconds to minutes
+            var roundedMinutes = Math.Round(remainingTimeMinutes / 1000, 1); // Round to one decimal place
 
             Console.WriteLine($"Remaining time for Frost Armor: {roundedMinutes} minutes");
             Console.ResetColor();
         }
 
+        // Define food and water types
         string[] waterTypes = { "Conjured Mana Strudel", "Conjured Mountain Spring Water", "Conjured Crystal Water", "Conjured Sparkling Water", "Conjured Mineral Water", "Conjured Spring Water", "Conjured Purified Water", "Conjured Fresh Water", "Conjured Water" };
         string[] foodTypes = { "Conjured Mana Strudel", "Conjured Cinnamon Roll", "Conjured Sweet Roll", "Conjured Sourdough", "Conjured Pumpernickel", "Conjured Rye", "Conjured Bread", "Conjured Muffin" };
         string[] healthPotions = { "Major Healing Potion", "Superior Healing Potion", "Greater Healing Potion", "Healing Potion", "Lesser Healing Potion", "Minor Healing Potion" };
         string[] manaPotions = { "Major Mana Potion", "Superior Mana Potion", "Greater Mana Potion", "Mana Potion", "Lesser Mana Potion", "Minor Mana Potion" };
 
+        // Count food items in the inventory
         int foodCount = 0;
         foreach (string foodType in foodTypes)
         {
@@ -466,6 +479,7 @@ public class EraFrostMage : Rotation
             foodCount += count;
         }
 
+        // Count water items in the inventory
         int waterCount = 0;
         foreach (string waterType in waterTypes)
         {
@@ -473,11 +487,13 @@ public class EraFrostMage : Rotation
             waterCount += count;
         }
 
+        // Display the counts of food and water items
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine("Current Food Count: " + foodCount);
         Console.WriteLine("Current Water Count: " + waterCount);
         Console.ResetColor();
 
+        // Log available health potions
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("Available Health Potions:");
         LogPotionCount("Major Healing Potion");
@@ -488,6 +504,7 @@ public class EraFrostMage : Rotation
         LogPotionCount("Minor Healing Potion");
         Console.ResetColor();
 
+        // Log available mana potions
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("Available Mana Potions:");
         LogPotionCount("Major Mana Potion");
@@ -498,6 +515,7 @@ public class EraFrostMage : Rotation
         LogPotionCount("Minor Mana Potion");
         Console.ResetColor();
 
+        // Log potion cooldown timer
         if (potionCooldowns.ContainsKey("Potion"))
         {
             var cooldownRemaining = 130 - (DateTime.Now - potionCooldowns["Potion"]).TotalSeconds;
@@ -522,4 +540,9 @@ public class EraFrostMage : Rotation
             Console.WriteLine($"{potionName}: {count}");
         }
     }
+
+
+
+
+
 }
