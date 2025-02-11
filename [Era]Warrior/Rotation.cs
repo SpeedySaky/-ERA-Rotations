@@ -298,7 +298,13 @@ public class Warrior : Rotation
         }
         CreatureType targetCreatureType = GetCreatureType(target);
 
-        if (Api.Spellbook.CanCast("Rend") && (targetCreatureType != CreatureType.Undead || targetCreatureType != CreatureType.Elemental || targetCreatureType != CreatureType.Mechanical) && rage >= 10 && !target.Auras.Contains("Rend"))
+        if (Api.Spellbook.CanCast("Rend") &&
+     targetCreatureType != CreatureType.Undead &&
+     targetCreatureType != CreatureType.Elemental &&
+     targetCreatureType != CreatureType.Mechanical &&
+     target.Name != "Searing Infernal" &&
+     rage >= 10 &&
+     !target.Auras.Contains("Rend"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Rend");
@@ -399,15 +405,7 @@ public class Warrior : Rotation
         }
 
         // Check for mana potions if mana is low
-        if (Api.Player.ManaPercent < 30)
-        {
-            if (UsePotion("Major Mana Potion")) return true;
-            if (UsePotion("Superior Mana Potion")) return true;
-            if (UsePotion("Greater Mana Potion")) return true;
-            if (UsePotion("Mana Potion")) return true;
-            if (UsePotion("Lesser Mana Potion")) return true;
-            if (UsePotion("Minor Mana Potion")) return true;
-        }
+       
 
         return false; // No potions were used
     }
