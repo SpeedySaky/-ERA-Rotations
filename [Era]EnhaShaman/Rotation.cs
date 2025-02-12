@@ -267,7 +267,7 @@ public class EraEnhaShaman : Rotation
             }
         }
 
-       if (Api.Spellbook.CanCast("Frost Shock") && !Api.Spellbook.OnCooldown("Frost Shock") && mana > 20 && !target.Auras.Contains("Frost Shock"))
+        if (Api.Spellbook.CanCast("Frost Shock") && !Api.Spellbook.OnCooldown("Frost Shock") && mana > 20 && !target.Auras.Contains("Frost Shock"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Frost Shock");
@@ -325,7 +325,7 @@ public class EraEnhaShaman : Rotation
         return base.CombatPulse();
     }
 
-    
+
     private bool HasAnyRockbiterEnchantment(EquipmentSlot slot)
     {
         return HasEnchantment(slot, "Rockbiter 7") || HasEnchantment(slot, "Rockbiter 6") || HasEnchantment(slot, "Rockbiter 5") || HasEnchantment(slot, "Rockbiter 4") || HasEnchantment(slot, "Rockbiter 3") || HasEnchantment(slot, "Rockbiter 2") || HasEnchantment(slot, "Rockbiter 1");
@@ -433,7 +433,7 @@ public class EraEnhaShaman : Rotation
         Console.WriteLine($"{mana} Mana available");
         Console.WriteLine($"{healthPercentage}% Health available");
         Console.ResetColor();
-       
+
         // Log available health potions
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("Available Health Potions:");
