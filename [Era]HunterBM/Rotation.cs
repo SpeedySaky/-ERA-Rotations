@@ -501,7 +501,8 @@ public class EraHunter : Rotation
                     return true;
             }
 
-            if (Api.Spellbook.CanCast("Serpent Sting") && mana > 15 && !target.Auras.Contains("Serpent Sting") && targethealth > 35)
+            if (Api.Spellbook.CanCast("Serpent Sting") && mana > 15 && !target.Auras.Contains("Serpent Sting") && targethealth > 35 && targetCreatureType != CreatureType.Undead &&
+     targetCreatureType != CreatureType.Elemental && targetCreatureType != CreatureType.Mechanical )
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Serpent Sting");
