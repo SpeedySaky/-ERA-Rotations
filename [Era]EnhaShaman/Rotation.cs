@@ -7,7 +7,7 @@ using wShadow.Warcraft.Defines;
 using wShadow.Warcraft.Managers;
 
 
-public class EnhaShaman : Rotation
+public class EraEnhaShaman : Rotation
 {
     private List<string> npcConditions = new List<string>
     {
@@ -164,7 +164,16 @@ public class EnhaShaman : Rotation
             return true; // Exit early if a potion was used
         }
 
-
+        if (Api.Spellbook.CanCast("Healing Wave") && healthPercentage <= 50 && mana > 20)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Healing Wave");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Healing Wave"))
+            {
+                return true;
+            }
+        }
         if (Api.Spellbook.CanCast("Earth Shock") && mana > 20 && !Api.Spellbook.OnCooldown("Earth Shock") && (target.IsCasting() || target.IsChanneling()))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -258,20 +267,7 @@ public class EnhaShaman : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Healing Wave") && healthPercentage <= 50 && mana > 20)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Healing Wave");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Healing Wave"))
-            {
-                return true;
-            }
-        }
-
-        bool hasAnyFlametongueEnchantment = HasAnyFlametongueEnchantment(EquipmentSlot.OffHand);
-
-        if (Api.Spellbook.CanCast("Frost Shock") && !Api.Spellbook.OnCooldown("Frost Shock") && mana > 20 && !target.Auras.Contains("Frost Shock"))
+       if (Api.Spellbook.CanCast("Frost Shock") && !Api.Spellbook.OnCooldown("Frost Shock") && mana > 20 && !target.Auras.Contains("Frost Shock"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Frost Shock");
@@ -398,7 +394,7 @@ public class EnhaShaman : Rotation
         }
 
         // Check for mana potions if mana is low
-        if (Api.Player.ManaPercent < 70)
+        if (Api.Player.ManaPercent < 20)
         {
             foreach (string mpot in MP)
             {
@@ -437,25 +433,7 @@ public class EnhaShaman : Rotation
         Console.WriteLine($"{mana} Mana available");
         Console.WriteLine($"{healthPercentage}% Health available");
         Console.ResetColor();
-        bool hasLava = HasEnchantment(EquipmentSlot.Hands, "Lava Lash");
-
-        if (hasLava)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Has Lava Lash");
-            Console.ResetColor();
-
-        }
-        bool hasMolten = HasEnchantment(EquipmentSlot.Hands, "Molten Blast");
-
-        if (hasMolten)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Has Molten Blast");
-            Console.ResetColor();
-
-        }
-        Console.ResetColor();
+       
         // Log available health potions
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("Available Health Potions:");
