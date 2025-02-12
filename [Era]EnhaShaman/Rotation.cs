@@ -7,7 +7,7 @@ using wShadow.Warcraft.Defines;
 using wShadow.Warcraft.Managers;
 
 
-public class EraEnhaShaman : Rotation
+public class EnhaShaman : Rotation
 {
     private List<string> npcConditions = new List<string>
     {
@@ -171,6 +171,16 @@ public class EraEnhaShaman : Rotation
             Console.WriteLine("Casting Earth Shock");
             Console.ResetColor();
             if (Api.Spellbook.Cast("Earth Shock"))
+            {
+                return true;
+            }
+        }
+        if (Api.Spellbook.CanCast("Blood Fury") && !Api.Spellbook.OnCooldown("Blood Fury"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Blood Fury");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Blood Fury"))
             {
                 return true;
             }
