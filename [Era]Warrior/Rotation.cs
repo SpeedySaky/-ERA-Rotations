@@ -6,7 +6,7 @@ using wShadow.Warcraft.Classes;
 using wShadow.Warcraft.Defines;
 using wShadow.Warcraft.CombatLog;
 
-public class Warrior : Rotation
+public class EraWarrior : Rotation
 {
 
     private int debugInterval = 5; // Set the debug interval in seconds
@@ -134,6 +134,24 @@ public class Warrior : Rotation
         if (UsePotions())
         {
             return true; // Exit early if a potion was used
+        }
+        // Switch to Berserker Stance and cast Pummel if the target is casting or channeling
+        if ((target.IsCasting() || target.IsChanneling()) && !me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Stance"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Switching to Berserker Stance to cast Pummel");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Berserker Stance"))
+                return true;
+        }
+
+        if (me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Pummel") && (target.IsCasting() || target.IsChanneling()))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Pummel");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Pummel"))
+                return true;
         }
         if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
         {
@@ -394,7 +412,7 @@ public class Warrior : Rotation
     public bool UsePotions()
     {
         // Check for health potions if health is low
-        if (Api.Player.HealthPercent <= 60)
+        if (Api.Player.HealthPercent <= 30)
         {
             if (UsePotion("Major Healing Potion")) return true;
             if (UsePotion("Superior Healing Potion")) return true;
