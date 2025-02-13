@@ -500,6 +500,7 @@ public class EraHunter : Rotation
                 if (Api.Spellbook.Cast("Arcane Shot"))
                     return true;
             }
+            CreatureType targetCreatureType = GetCreatureType(target);
 
             if (Api.Spellbook.CanCast("Serpent Sting") && mana > 15 && !target.Auras.Contains("Serpent Sting") && targethealth > 35 && targetCreatureType != CreatureType.Undead &&
      targetCreatureType != CreatureType.Elemental && targetCreatureType != CreatureType.Mechanical )
