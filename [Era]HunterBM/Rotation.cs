@@ -34,6 +34,10 @@ public class EraHunter : Rotation
         }
         return true;
     }
+    private CreatureType GetCreatureType(WowUnit unit)
+    {
+        return unit.Info.GetCreatureType();
+    }
     private bool HasItem(object item) => Api.Inventory.HasItem(item);
 
     private int debugInterval = 5; // Set the debug interval in seconds
