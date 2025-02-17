@@ -127,7 +127,7 @@ public class EraHunter : Rotation
         }
 
         // Revive Pet Logic
-        if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Revive Pet") && mana > 70 && me.Level >= 10)
+        if ((pet == null || pet.IsDead()) && Api.Spellbook.CanCast("Revive Pet") && mana > 70 && me.Level >= 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Ressing Pet");
@@ -418,7 +418,7 @@ public class EraHunter : Rotation
                 return true;
         }
         // Melee Logic (if target is within melee range)
-        if (targetDistance <= 9)
+        if (targetDistance <= 7)
         {
             // Melee abilities such as "Raptor Strike" and "Attack"
             if (Api.Spellbook.CanCast("Wing Clip") && mana > 15 && target != null && !target.Auras.Contains("Wing Clip"))
