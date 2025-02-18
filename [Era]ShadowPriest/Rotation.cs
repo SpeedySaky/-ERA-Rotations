@@ -100,6 +100,26 @@ public class EraShadowPriest : Rotation
                 return true;
             }
         }
+        if (Api.Spellbook.CanCast("Lesser Heal") && healthPercentage < 60 && me.Level < 20 && mana > 20)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Lesser Heal");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Lesser Heal"))
+            {
+                return true;
+            }
+        }
+        if (Api.Spellbook.CanCast("Flash Heal") && healthPercentage < 60 && me.Level >= 20 && mana > 20)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Flash Heal");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Flash Heal"))
+            {
+                return true;
+            }
+        }
         if (Api.Spellbook.CanCast("Power Word: Fortitude") && !me.Auras.Contains("Power Word: Fortitude",true))
         {
             Console.ForegroundColor = ConsoleColor.Green;
