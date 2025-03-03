@@ -201,8 +201,26 @@ public class EraFrostMage : Rotation
 
         if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
 
-        var hasaura = me.Auras.Contains("Curse of Stalvan") || me.Auras.Contains("Curse of Blood");
-
+        var hasaura = me.Auras.Contains("Curse of Stalvan") ||
+                              me.Auras.Contains("Curse of Blood") ||
+                              me.Auras.Contains("Wither Touch") ||
+                              me.Auras.Contains("Curse of Agony") ||
+                              me.Auras.Contains("Curse of Weakness") ||
+                              me.Auras.Contains("Curse of Tongues") ||
+                              me.Auras.Contains("Curse of Exhaustion") ||
+                              me.Auras.Contains("Curse of Recklessness") ||
+                              me.Auras.Contains("Curse of the Elements") ||
+                              me.Auras.Contains("Curse of Shadow") ||
+                              me.Auras.Contains("Curse of Doom") ||
+                              me.Auras.Contains("Curse of Mending") ||
+                              me.Auras.Contains("Curse of the Eye") ||
+                              me.Auras.Contains("Curse of the Deadwood") ||
+                              me.Auras.Contains("Curse of the Dreadmaul") ||
+                              me.Auras.Contains("Curse of the Firebrand") ||
+                              me.Auras.Contains("Curse of the Plaguebringer") ||
+                              me.Auras.Contains("Curse of the Tribes") ||
+                              me.Auras.Contains("Curse of the Worgen") ||
+                              me.Auras.Contains("Curse of the Darkmaster");
         if (UsePotions())
         {
             return true;

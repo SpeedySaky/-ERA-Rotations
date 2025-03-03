@@ -284,7 +284,11 @@ public class RogueNoStealth : Rotation
         }
         CreatureType targetCreatureType = GetCreatureType(target);
 
-        if (Api.Spellbook.HasSpell("Rupture") && points >= 2 && !target.Auras.Contains("Rupture",true) && energy >= 25 && (targetCreatureType != CreatureType.Mechanical || targetCreatureType != CreatureType.Elemental))
+        if (Api.Spellbook.HasSpell("Rupture") && points >= 2 && !target.Auras.Contains("Rupture",true) && energy >= 25 &&
+     targetCreatureType != CreatureType.Undead &&
+     targetCreatureType != CreatureType.Elemental &&
+     targetCreatureType != CreatureType.Mechanical &&
+     target.Name != "Searing Infernal")
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Casting Rupture ");

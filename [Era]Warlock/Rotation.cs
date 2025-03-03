@@ -5,11 +5,16 @@ using System.Collections.Generic;
 using wShadow.Warcraft.Classes;
 using wShadow.Warcraft.Defines;
 using wShadow.Warcraft.Managers;
+using wShadow.WowBots;
+using wShadow.WowBots.PartyInfo;
+using System.Linq;
+
 
 public class EraWarlock : Rotation
 {
     private bool assistedPet = false;
     private DateTime lastAssistPetLogTime = DateTime.MinValue; // Add this field
+    private Dictionary<string, DateTime> healthstoneCooldowns = new Dictionary<string, DateTime>();
 
     private bool HasItem(object item)
         => Api.Inventory.HasItem(item);
@@ -51,8 +56,8 @@ public class EraWarlock : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 550;
-        FastTick = 150;
+        SlowTick = 750;
+        FastTick = 350;
 
         // You can also use this method to add to various action lists.
 
@@ -105,7 +110,10 @@ public class EraWarlock : Rotation
         var targetDistance = target.Position.Distance2D(me.Position);
 
         if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
-
+        if (UseHealthstone())
+        {
+            return true; // Exit early if a potion was used
+        }
         if (me.IsValid())
         {
             if (Api.Spellbook.CanCast("Demon Armor") && !me.Auras.Contains("Demon Armor"))
@@ -128,53 +136,55 @@ public class EraWarlock : Rotation
             }
         }
         if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Summon Voidwalker.");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Summon Voidwalker"))
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Summon Voidwalker.");
-                Console.ResetColor();
-
-                if (Api.Spellbook.Cast("Summon Voidwalker"))
-                {
-                    return true;
-                }
+                return true;
             }
-            else if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
+        }
+        else if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Summon Imp.");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Summon Imp"))
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Summon Imp.");
-                Console.ResetColor();
-
-                if (Api.Spellbook.Cast("Summon Imp"))
-                {
-                    return true;
-                }
+                return true;
             }
+        }
 
 
-            if (IsValid(pet) && PetHealth < 50 && healthPercentage > 50 && Api.Spellbook.CanCast("Health Funnel"))
+        if (IsValid(pet) && PetHealth < 50 && healthPercentage > 50 && Api.Spellbook.CanCast("Health Funnel"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Healing Pet ");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Health Funnel"))
+                return true;
+        }
+
+
+        if (Api.Spellbook.CanCast("Life Tap") && healthPercentage > 80 && mana < 30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Life Tap");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Life Tap"))
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Healing Pet ");
-                Console.ResetColor();
-
-                if (Api.Spellbook.Cast("Health Funnel"))
-                    return true;
+                return true;
             }
+        }
 
-
-            if (Api.Spellbook.CanCast("Life Tap") && healthPercentage > 80 && mana < 30)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Casting Life Tap");
-                Console.ResetColor();
-                if (Api.Spellbook.Cast("Life Tap"))
-                {
-                    return true;
-                }
-            }
-        
-        //string[] healthstoneTypes = { "Minor Healthstone", "Lesser Healthstone", "Healthstone", "Greater Healthstone", "Major Healthstone", "Master Healthstone", "Demonic Healthstone", "Fel Healthstone" };
-
+        if (CreateHealthstone())
+        {
+            return true; // Exit early if a Healthstone was created
+        }
 
         var reaction = me.GetReaction(target);
 
@@ -252,7 +262,14 @@ public class EraWarlock : Rotation
         {
             return true; // Exit early if a potion was used
         }
-
+        if (UseHealthstone())
+        {
+            return true; // Exit early if a potion was used
+        }
+        if (CreateHealthstone())
+        {
+            return true; // Exit early if a Healthstone was created
+        }
         // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
 
@@ -260,11 +277,43 @@ public class EraWarlock : Rotation
 
 
         var meTarget = me.Target;
+        if (Api.Spellbook.CanCast("Sacrifice") && pet != null && healthPercentage < 20)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Sacrifice");
+            Console.ResetColor();
 
+            if (Api.Spellbook.Cast("Sacrifice"))
+            {
+                return true;
+            }
+        }
+        if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Summon Voidwalker.");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Summon Voidwalker"))
+            {
+                return true;
+            }
+        }
+        else if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Imp") && mana > 30)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Summon Imp.");
+            Console.ResetColor();
+
+            if (Api.Spellbook.Cast("Summon Imp"))
+            {
+                return true;
+            }
+        }
         // Improved Assist Pet Logic
         if (pet != null && pet.InCombat() && (target == null || target.IsDead()) && !assistedPet && me.Level >= 10)
         {
-            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Assist Pet");
@@ -276,7 +325,7 @@ public class EraWarlock : Rotation
             var petTarget = pet.Target();
             if (petTarget != null && petTarget.IsValid() && !petTarget.IsDead())
             {
-                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine($"Pet has a valid target: {petTarget.Name}");
@@ -299,7 +348,7 @@ public class EraWarlock : Rotation
                 }
                 else
                 {
-                    if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                    if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Failed to assist pet");
@@ -310,7 +359,7 @@ public class EraWarlock : Rotation
             }
             else
             {
-                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Pet does not have a valid target or target is dead");
@@ -321,7 +370,7 @@ public class EraWarlock : Rotation
         }
         else if (target != null && !target.IsDead())
         {
-            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
+            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Player has a valid target, resetting assistedPet flag");
@@ -345,9 +394,11 @@ public class EraWarlock : Rotation
         }
 
 
+        CreatureType targetCreatureType = GetCreatureType(target);
 
 
-        if (Api.Spellbook.CanCast("Drain Life") && healthPercentage <= 50 && mana >= 5)
+        if (Api.Spellbook.CanCast("Drain Life") && healthPercentage <= 30 && mana >= 5 && targetCreatureType != CreatureType.Undead &&
+     targetCreatureType != CreatureType.Elemental && targetCreatureType != CreatureType.Mechanical)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Drain Life");
@@ -385,7 +436,7 @@ public class EraWarlock : Rotation
                 return true;
         }
 
-        if (Api.Spellbook.CanCast("Shadow Bolt") && mana >= 10)
+        if (Api.Spellbook.CanCast("Shadow Bolt") && mana >= 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Shadow Bolt");
@@ -424,10 +475,134 @@ public class EraWarlock : Rotation
 
         return base.CombatPulse();
     }
+
+    private bool CreateHealthstone()
+    {
+        string[] healthstoneTypes = { "Fel Healthstone", "Demonic Healthstone", "Master Healthstone", "Major Healthstone", "Greater Healthstone", "Healthstone", "Lesser Healthstone", "Minor Healthstone" };
+        bool needsHealthstone = true;
+
+        foreach (string healthstoneType in healthstoneTypes)
+        {
+            if (Api.Inventory.HasItem(healthstoneType))
+            {
+                needsHealthstone = false;
+                break;
+            }
+        }
+
+        if (needsHealthstone && HasItem("Soul Shard"))
+        {
+            if (Api.Spellbook.CanCast("Create Healthstone (Fel)") && !Api.Inventory.HasItem("Fel Healthstone"))
+            {
+                if (Api.Spellbook.Cast("Create Healthstone (Fel)"))
+                {
+                    Console.WriteLine("Creating Fel Healthstone.");
+                    return true;
+                }
+            }
+            else if (Api.Spellbook.CanCast("Create Healthstone (Demonic)") && !Api.Inventory.HasItem("Demonic Healthstone"))
+            {
+                if (Api.Spellbook.Cast("Create Healthstone (Demonic)"))
+                {
+                    Console.WriteLine("Creating Demonic Healthstone.");
+                    return true;
+                }
+            }
+            else if (Api.Spellbook.CanCast("Create Healthstone (Master)") && !Api.Inventory.HasItem("Master Healthstone"))
+            {
+                if (Api.Spellbook.Cast("Create Healthstone (Master)"))
+                {
+                    Console.WriteLine("Creating Master Healthstone.");
+                    return true;
+                }
+            }
+            else if (Api.Spellbook.CanCast("Create Healthstone (Major)") && !Api.Inventory.HasItem("Major Healthstone"))
+            {
+                if (Api.Spellbook.Cast("Create Healthstone (Major)"))
+                {
+                    Console.WriteLine("Creating Major Healthstone.");
+                    return true;
+                }
+            }
+            else if (Api.Spellbook.CanCast("Create Healthstone (Greater)") && !Api.Inventory.HasItem("Greater Healthstone"))
+            {
+                if (Api.Spellbook.Cast("Create Healthstone (Greater)"))
+                {
+                    Console.WriteLine("Creating Greater Healthstone.");
+                    return true;
+                }
+            }
+            else if (Api.Spellbook.CanCast("Create Healthstone") && !Api.Inventory.HasItem("Healthstone"))
+            {
+                if (Api.Spellbook.Cast("Create Healthstone"))
+                {
+                    Console.WriteLine("Creating Healthstone.");
+                    return true;
+                }
+            }
+            else if (Api.Spellbook.CanCast("Create Healthstone (Lesser)") && !Api.Inventory.HasItem("Lesser Healthstone"))
+            {
+                if (Api.Spellbook.Cast("Create Healthstone (Lesser)"))
+                {
+                    Console.WriteLine("Creating Lesser Healthstone.");
+                    return true;
+                }
+            }
+            else if (Api.Spellbook.CanCast("Create Healthstone (Minor)") && !Api.Inventory.HasItem("Minor Healthstone"))
+            {
+                if (Api.Spellbook.Cast("Create Healthstone (Minor)"))
+                {
+                    Console.WriteLine("Creating Minor Healthstone.");
+                    return true;
+                }
+            }
+        }
+
+        return false; // No Healthstone was created
+    }
+
+
+    public bool UseHealthstone()
+    {
+        // Check for healthstones if health is low
+        if (Api.Player.HealthPercent <= 50)
+        {
+            if (UseHealthstone("Master Healthstone")) return true;
+            if (UseHealthstone("Major Healthstone")) return true;
+            if (UseHealthstone("Greater Healthstone")) return true;
+            if (UseHealthstone("Healthstone")) return true;
+            if (UseHealthstone("Lesser Healthstone")) return true;
+            if (UseHealthstone("Minor Healthstone")) return true;
+        }
+
+        return false; // No healthstones were used
+    }
+    private bool UseHealthstone(string healthstoneName)
+    {
+        int healthstoneCount = Api.Inventory.ItemCount(healthstoneName);
+
+        // Check cooldown for healthstones
+        bool isOnCooldown = healthstoneCooldowns.ContainsKey("Healthstone") && (DateTime.Now - healthstoneCooldowns["Healthstone"]).TotalSeconds < 120;
+
+        if (healthstoneCount > 0 && !isOnCooldown)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Using {healthstoneName}.");
+            Console.ResetColor();
+
+            if (Api.Inventory.Use(healthstoneName))
+            {
+                healthstoneCooldowns["Healthstone"] = DateTime.Now; // Update the cooldown
+                return true; // Exit early after using the healthstone
+            }
+        }
+
+        return false; // Healthstone was not used
+    }
     public bool UsePotions()
     {
         // Check for health potions if health is low
-        if (Api.Player.HealthPercent <= 70)
+        if (Api.Player.HealthPercent <= 30)
         {
             if (UsePotion("Major Healing Potion")) return true;
             if (UsePotion("Superior Healing Potion")) return true;
