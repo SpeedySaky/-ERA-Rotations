@@ -182,19 +182,39 @@ public class EraShadowPriest : Rotation
                     {
                         if (!IsNPC(target))
                         {
-                            if (Api.Spellbook.CanCast("Smite"))
+                            if (me.Auras.Contains("Shadowform", false))
                             {
-                                Console.ForegroundColor = ConsoleColor.Green;
-                                Console.WriteLine("Casting Smite");
-                                Console.ResetColor();
-                                if (Api.Spellbook.Cast("Smite"))
+                                if (Api.Spellbook.CanCast("Shadow Word: Pain"))
                                 {
-                                    return true;
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Console.WriteLine("Casting Shadow Word: Pain");
+                                    Console.ResetColor();
+                                    if (Api.Spellbook.Cast("Shadow Word: Pain"))
+                                    {
+                                        return true;
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Shadow Word: Pain is not ready to be cast.");
                                 }
                             }
                             else
                             {
-                                Console.WriteLine("Smite is not ready to be cast.");
+                                if (Api.Spellbook.CanCast("Smite"))
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Console.WriteLine("Casting Smite");
+                                    Console.ResetColor();
+                                    if (Api.Spellbook.Cast("Smite"))
+                                    {
+                                        return true;
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Smite is not ready to be cast.");
+                                }
                             }
                         }
                         else
@@ -217,6 +237,8 @@ public class EraShadowPriest : Rotation
                 Console.WriteLine("Target is dead.");
             }
         }
+
+    
 
         return base.PassivePulse();
     }

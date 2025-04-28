@@ -136,7 +136,7 @@ public class EraWarrior : Rotation
             return true; // Exit early if a potion was used
         }
         // Switch to Berserker Stance and cast Pummel if the target is casting or channeling
-        if ((target.IsCasting() || target.IsChanneling()) && !me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Stance"))
+        if ((target.IsCasting() || target.IsChanneling()) && !me.Auras.Contains("Berserker Stance", false) && rage >= 20 && Api.Spellbook.CanCast("Berserker Stance"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Switching to Berserker Stance to cast Pummel");
@@ -145,7 +145,7 @@ public class EraWarrior : Rotation
                 return true;
         }
 
-        if (me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Pummel") && (target.IsCasting() || target.IsChanneling()))
+        if (me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Pummel") && rage >= 10 && (target.IsCasting() || target.IsChanneling()))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Pummel");
@@ -182,7 +182,7 @@ public class EraWarrior : Rotation
 
 
         // Continue with the rest of the combat rotation
-        if (!me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Battle Stance"))
+        if (!me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Battle Stance") && !me.Auras.Contains("Berserker Stance", false))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Switching to Battle Stance");
@@ -230,7 +230,7 @@ public class EraWarrior : Rotation
         }
 
         // Switch to Berserker Stance for DPS abilities
-        if (!me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Rage") && unitsTargetingMe >= 2)
+        if (!me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Rage") && unitsTargetingMe >= 2 && !Api.Spellbook.OnCooldown("Berserker Rage"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Switching to Berserker Stance for DPS");
@@ -239,7 +239,6 @@ public class EraWarrior : Rotation
                 return true;
         }
 
-        // Cast Execute in Battle Stance or Berserker Stance
         if ((me.Auras.Contains("Battle Stance", false) || me.Auras.Contains("Berserker Stance", false)) && Api.Spellbook.CanCast("Execute") && targethealth <= 20 && !Api.Spellbook.OnCooldown("Execute") && rage > 15)
         {
             Console.ForegroundColor = ConsoleColor.Green;
