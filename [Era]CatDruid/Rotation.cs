@@ -137,7 +137,7 @@ public class EraCatDruid : Rotation
                 return true;
         }
 
-        if (Api.Spellbook.CanCast("Cat Form") && !me.Auras.Contains("Cat Form", false) && mana > 55)
+        if (Api.Spellbook.CanCast("Cat Form") && !me.Auras.Contains("Cat Form", false) && mana > 55 && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && !IsNPC(target))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Cat Form");
@@ -147,7 +147,7 @@ public class EraCatDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
+        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && !IsNPC(target))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Attack");
@@ -208,7 +208,7 @@ public class EraCatDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Tiger's Fury") && energy >= 30 && !me.Auras.Contains("Tiger's Fury") && me.Auras.Contains("Cat Form", false))
+        if (Api.Spellbook.CanCast("Tiger's Fury") && energy >= 30 && !me.Auras.Contains("Tiger's Fury"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Tiger's Fury");
@@ -218,7 +218,7 @@ public class EraCatDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Berserk") && !Api.Spellbook.OnCooldown("Berserk") && me.Auras.Contains("Cat Form", false))
+        if (Api.Spellbook.CanCast("Berserk") && !Api.Spellbook.OnCooldown("Berserk"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Berserk");
@@ -228,7 +228,7 @@ public class EraCatDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Savage Roar") && comboPoints >= 1 && !me.Auras.Contains("Savage Roar") && me.Auras.Contains("Cat Form", false))
+        if (Api.Spellbook.CanCast("Savage Roar") && comboPoints >= 1 && !me.Auras.Contains("Savage Roar"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Savage Roar");
@@ -238,7 +238,7 @@ public class EraCatDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Ferocious Bite") && comboPoints >= 3 && energy >= 35 && me.Auras.Contains("Cat Form", false))
+        if (Api.Spellbook.CanCast("Ferocious Bite") && comboPoints >= 3 && energy >= 35)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Ferocious Bite");
@@ -250,7 +250,7 @@ public class EraCatDruid : Rotation
         }
         CreatureType targetCreatureType = GetCreatureType(target);
 
-        if (Api.Spellbook.CanCast("Rake") && me.Auras.Contains("Cat Form", false) && !target.Auras.Contains("Rake") && energy >= 35 &&
+        if (Api.Spellbook.CanCast("Rake") && !target.Auras.Contains("Rake") && energy >= 35 &&
      targetCreatureType != CreatureType.Undead &&
      targetCreatureType != CreatureType.Elemental &&
      targetCreatureType != CreatureType.Mechanical &&
@@ -265,7 +265,7 @@ public class EraCatDruid : Rotation
             }
         }
         
-        if (Api.Spellbook.CanCast("Claw") && energy >= 40 && me.Auras.Contains("Cat Form", false))
+        if (Api.Spellbook.CanCast("Claw") && energy >= 40 )
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Claw");
@@ -275,7 +275,7 @@ public class EraCatDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Rip") && comboPoints >= 5 && energy >= 30 && me.Auras.Contains("Cat Form", false))
+        if (Api.Spellbook.CanCast("Rip") && comboPoints >= 5 && energy >= 30)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Rip");
@@ -286,7 +286,7 @@ public class EraCatDruid : Rotation
             }
         }
        
-        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && me.Auras.Contains("Cat Form", false))
+        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() )
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Attack");

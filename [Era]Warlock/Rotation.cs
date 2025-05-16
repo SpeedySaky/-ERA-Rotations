@@ -108,6 +108,7 @@ public class EraWarlock : Rotation
         // Target distance from the player
         // Target distance from the player
         var targetDistance = target.Position.Distance2D(me.Position);
+        var petDistance = pet?.Position.Distance2D(me.Position) ?? 0;
 
         if (me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsMoving() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
         if (UseHealthstone())
@@ -135,7 +136,7 @@ public class EraWarlock : Rotation
                     return true;
             }
         }
-        if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
+        if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 30 && Api.Spellbook.HasSpell("Summon Voidwalker"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Summon Voidwalker.");
@@ -159,7 +160,7 @@ public class EraWarlock : Rotation
         }
 
 
-        if (IsValid(pet) && PetHealth < 50 && healthPercentage > 50 && Api.Spellbook.CanCast("Health Funnel"))
+        if (IsValid(pet) && PetHealth < 50 && petDistance <= 20 && healthPercentage > 50 && Api.Spellbook.CanCast("Health Funnel"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Healing Pet ");
@@ -191,7 +192,7 @@ public class EraWarlock : Rotation
         if (target.IsValid())
         {
 
-            if (!target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target) && healthPercentage > 50 && mana > 20 && PetHealth > 50)
+            if (!target.IsDead() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && mana > 20 && !IsNPC(target) && healthPercentage > 50 && mana > 20 && PetHealth > 50 && targetDistance<40)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Casting Petattack");
@@ -288,7 +289,7 @@ public class EraWarlock : Rotation
                 return true;
             }
         }
-        if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 25 && Api.Spellbook.HasSpell("Summon Voidwalker"))
+        if ((pet == null || PetHealth == 0) && Api.Spellbook.CanCast("Summon Voidwalker") && HasItem("Soul Shard") && mana > 30 && Api.Spellbook.HasSpell("Summon Voidwalker"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Summon Voidwalker.");
@@ -311,75 +312,45 @@ public class EraWarlock : Rotation
             }
         }
         // Improved Assist Pet Logic
-        if (pet != null && pet.InCombat() && (target == null || target.IsDead()) && !assistedPet && me.Level >= 10)
+        if (target == null)
         {
-            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
+            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Assist Pet");
+                Console.WriteLine("Player is in combat and has no valid target. Assisting pet...");
                 Console.ResetColor();
-                lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                lastAssistPetLogTime = DateTime.Now;
             }
 
-            // Check if the pet has a target and assist the pet
-            var petTarget = pet.Target();
-            if (petTarget != null && petTarget.IsValid() && !petTarget.IsDead())
+            if (Api.UseMacro("AssistPet"))
             {
-                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"Pet has a valid target: {petTarget.Name}");
-                    Console.ResetColor();
-                    lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
-                }
-
-                if (Api.UseMacro("AssistPet"))
-                {
-                    if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 5) // Check if 5 seconds have passed
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("Successfully assisted pet");
-                        Console.ResetColor();
-                        lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
-                    }
-
-                    assistedPet = true; // Set the flag to true after assisting the pet
-                    return true;
-                }
-                else
-                {
-                    if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Failed to assist pet");
-                        Console.ResetColor();
-                        lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
-                    }
-                }
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Successfully assisted pet.");
+                Console.ResetColor();
+                assistedPet = true; // Set the flag to true after assisting the pet
+                return true;
             }
             else
             {
-                if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Pet does not have a valid target or target is dead");
-                    Console.ResetColor();
-                    lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
-                }
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Failed to assist pet.");
+                Console.ResetColor();
             }
         }
         else if (target != null && !target.IsDead())
         {
-            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3) // Check if 5 seconds have passed
+            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Player has a valid target, resetting assistedPet flag");
+                Console.WriteLine("Player has a valid target, resetting assistedPet flag.");
                 Console.ResetColor();
-                lastAssistPetLogTime = DateTime.Now; // Update the lastAssistPetLogTime
+                lastAssistPetLogTime = DateTime.Now;
             }
 
             assistedPet = false; // Reset the flag when the player has a valid target
         }
+
+
 
         if (Api.Spellbook.CanCast("Drain Soul") && Api.Inventory.ItemCount("Soul Shard") <= 2 && targethealth <= 30 && mana > 10)
         {
@@ -478,94 +449,65 @@ public class EraWarlock : Rotation
 
     private bool CreateHealthstone()
     {
-        string[] healthstoneTypes = { "Fel Healthstone", "Demonic Healthstone", "Master Healthstone", "Major Healthstone", "Greater Healthstone", "Healthstone", "Lesser Healthstone", "Minor Healthstone" };
-        bool needsHealthstone = true;
+        // Check if we already have any Healthstone in the inventory
+        string[] healthstoneTypes = {
+        "Fel Healthstone", "Demonic Healthstone", "Master Healthstone",
+        "Major Healthstone", "Greater Healthstone", "Healthstone",
+        "Lesser Healthstone", "Minor Healthstone"
+    };
 
-        foreach (string healthstoneType in healthstoneTypes)
+        bool hasHealthstone = healthstoneTypes.Any(Api.Inventory.HasItem);
+
+        // If we already have a Healthstone, do nothing and suppress logging
+        if (hasHealthstone)
         {
-            if (Api.Inventory.HasItem(healthstoneType))
-            {
-                needsHealthstone = false;
-                break;
-            }
+            return false;
         }
 
-        if (needsHealthstone && HasItem("Soul Shard"))
+        // Check if we have a Soul Shard to create a Healthstone
+        if (!HasItem("Soul Shard"))
         {
-            if (Api.Spellbook.CanCast("Create Healthstone (Fel)") && !Api.Inventory.HasItem("Fel Healthstone"))
-            {
-                if (Api.Spellbook.Cast("Create Healthstone (Fel)"))
-                {
-                    Console.WriteLine("Creating Fel Healthstone.");
-                    return true;
-                }
-            }
-            else if (Api.Spellbook.CanCast("Create Healthstone (Demonic)") && !Api.Inventory.HasItem("Demonic Healthstone"))
-            {
-                if (Api.Spellbook.Cast("Create Healthstone (Demonic)"))
-                {
-                    Console.WriteLine("Creating Demonic Healthstone.");
-                    return true;
-                }
-            }
-            else if (Api.Spellbook.CanCast("Create Healthstone (Master)") && !Api.Inventory.HasItem("Master Healthstone"))
-            {
-                if (Api.Spellbook.Cast("Create Healthstone (Master)"))
-                {
-                    Console.WriteLine("Creating Master Healthstone.");
-                    return true;
-                }
-            }
-            else if (Api.Spellbook.CanCast("Create Healthstone (Major)") && !Api.Inventory.HasItem("Major Healthstone"))
-            {
-                if (Api.Spellbook.Cast("Create Healthstone (Major)"))
-                {
-                    Console.WriteLine("Creating Major Healthstone.");
-                    return true;
-                }
-            }
-            else if (Api.Spellbook.CanCast("Create Healthstone (Greater)") && !Api.Inventory.HasItem("Greater Healthstone"))
-            {
-                if (Api.Spellbook.Cast("Create Healthstone (Greater)"))
-                {
-                    Console.WriteLine("Creating Greater Healthstone.");
-                    return true;
-                }
-            }
-            else if (Api.Spellbook.CanCast("Create Healthstone") && !Api.Inventory.HasItem("Healthstone"))
-            {
-                if (Api.Spellbook.Cast("Create Healthstone"))
-                {
-                    Console.WriteLine("Creating Healthstone.");
-                    return true;
-                }
-            }
-            else if (Api.Spellbook.CanCast("Create Healthstone (Lesser)") && !Api.Inventory.HasItem("Lesser Healthstone"))
-            {
-                if (Api.Spellbook.Cast("Create Healthstone (Lesser)"))
-                {
-                    Console.WriteLine("Creating Lesser Healthstone.");
-                    return true;
-                }
-            }
-            else if (Api.Spellbook.CanCast("Create Healthstone (Minor)") && !Api.Inventory.HasItem("Minor Healthstone"))
-            {
-                if (Api.Spellbook.Cast("Create Healthstone (Minor)"))
-                {
-                    Console.WriteLine("Creating Minor Healthstone.");
-                    return true;
-                }
-            }
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("No Soul Shard available to create a Healthstone.");
+            Console.ResetColor();
+            return false;
         }
 
-        return false; // No Healthstone was created
+        // Check if the macro exists
+        if (!Api.HasMacro("Healthstone"))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("The Healthstone macro was not found. Please create a macro named 'Healthstone'.");
+            Console.ResetColor();
+            return false;
+        }
+
+        // Use the macro to create a Healthstone
+        if (Api.UseMacro("Healthstone"))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Healthstone successfully created.");
+            Console.ResetColor();
+            return true;
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("The Healthstone macro failed to execute.");
+            Console.ResetColor();
+        }
+
+        return false; // Healthstone was not created
     }
+
+
+
 
 
     public bool UseHealthstone()
     {
         // Check for healthstones if health is low
-        if (Api.Player.HealthPercent <= 50)
+        if (Api.Player.HealthPercent <= 30)
         {
             if (UseHealthstone("Master Healthstone")) return true;
             if (UseHealthstone("Major Healthstone")) return true;
@@ -602,7 +544,7 @@ public class EraWarlock : Rotation
     public bool UsePotions()
     {
         // Check for health potions if health is low
-        if (Api.Player.HealthPercent <= 30)
+        if (Api.Player.HealthPercent <= 50)
         {
             if (UsePotion("Major Healing Potion")) return true;
             if (UsePotion("Superior Healing Potion")) return true;

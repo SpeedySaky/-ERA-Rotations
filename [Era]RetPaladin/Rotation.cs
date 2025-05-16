@@ -219,7 +219,7 @@ public class EraRetPala : Rotation
         }
 
 
-        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && target.IsValid() && targetDistance < 30)
+        if (!me.Auras.Contains("Seal of Command") && Api.Spellbook.CanCast("Seal of Command") && target.IsValid() && targetDistance < 10)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Seal of Command");
@@ -293,7 +293,16 @@ public class EraRetPala : Rotation
         {
             return true; // Exit early if a potion was used
         }
-
+        if (Api.Spellbook.CanCast("Hammer of Justice") && mana > 10 && !Api.Spellbook.OnCooldown("Hammer of Justice") && (target.IsCasting() || target.IsChanneling()))
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Casting Hammer of Justice");
+            Console.ResetColor();
+            if (Api.Spellbook.Cast("Hammer of Justice"))
+            {
+                return true;
+            }
+        }
         if (Api.Spellbook.CanCast("Sanctity Aura") && !me.Auras.Contains("Sanctity Aura", false))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -451,16 +460,7 @@ public class EraRetPala : Rotation
                 return true;
         }
 
-        if (Api.Spellbook.CanCast("Hammer of Justice") && mana > 10 && !Api.Spellbook.OnCooldown("Hammer of Justice") && (target.IsCasting() || target.IsChanneling()))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Hammer of Justice");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Hammer of Justice"))
-            {
-                return true;
-            }
-        }
+        
 
         var unitAuras = new C_UnitAuras(me); // Create an instance of C_UnitAuras with the player as the unit
 

@@ -148,7 +148,7 @@ public class EraBearDruid : Rotation
                 return true;
             }
         }
-        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
+        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking() && (reaction != UnitReaction.Friendly && reaction != UnitReaction.Honored && reaction != UnitReaction.Revered && reaction != UnitReaction.Exalted) && !IsNPC(target))
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Attack");
