@@ -149,7 +149,7 @@ public class RogueStealth : Rotation
             }
         }
 
-        if (Api.Spellbook.CanCast("Sprint") && !Api.Spellbook.OnCooldown("Sprint") && targetDistance <= 40 )
+        if (Api.Spellbook.CanCast("Sprint") && !Api.Spellbook.OnCooldown("Sprint") && targetDistance >= 40 )
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Sprint");

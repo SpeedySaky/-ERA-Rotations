@@ -129,7 +129,7 @@ public class EraWarrior : Rotation
         var unitsTargetingMe = Api.UnitsTargetingMe(5, true).Length;
 
         // Check for the DODGE event
-        if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food")) return false;
+        if (!me.IsValid() || !target.IsValid() || me.IsDead() || me.IsGhost() || me.IsCasting() || me.IsChanneling() || me.IsMounted() || me.Auras.Contains("Drink") || me.Auras.Contains("Food") || !me.IsAutoAttacking()) return false;
 
         if (UsePotions())
         {
@@ -153,14 +153,7 @@ public class EraWarrior : Rotation
             if (Api.Spellbook.Cast("Pummel"))
                 return true;
         }
-        if (Api.Spellbook.CanCast("Attack") && !me.IsAutoAttacking())
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Casting Attack");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Attack"))
-                return true;
-        }
+       
         if (Api.Spellbook.CanCast("Bloodrage") && me.HealthPercent >= 70 && !Api.Spellbook.OnCooldown("Bloodrage"))
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -202,44 +195,19 @@ public class EraWarrior : Rotation
         }
 
         // Cast Overpower in Battle Stance
-        if (me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Overpower") && rage > 5 && !Api.Spellbook.OnCooldown("Overpower") && DateTime.Now - lastOverpowerAttempt >= overpowerCooldown)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Attempting Overpower at {DateTime.Now}. Conditions: CanCast={Api.Spellbook.CanCast("Overpower")}, Rage={rage}, OnCooldown={Api.Spellbook.OnCooldown("Overpower")}");
-            Console.ResetColor();
+       
 
-            bool castResult = Api.Spellbook.Cast("Overpower"); // Store the result for clarity
+        //// Switch to Berserker Stance for DPS abilities
+        //if (!me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Rage") && unitsTargetingMe >= 2 && !Api.Spellbook.OnCooldown("Berserker Rage"))
+        //{
+        //    Console.ForegroundColor = ConsoleColor.Green;
+        //    Console.WriteLine("Switching to Berserker Stance for DPS");
+        //    Console.ResetColor();
+        //    if (Api.Spellbook.Cast("Berserker Stance"))
+        //        return true;
+        //}
 
-            if (castResult)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Overpower cast successfully!");
-                Console.ResetColor();
-
-                lastOverpowerAttempt = DateTime.Now; // Set cooldown timer after successful cast
-                return true;
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Overpower attempt failed, starting cooldown.");
-                Console.ResetColor();
-
-                lastOverpowerAttempt = DateTime.Now; // Start cooldown even if the cast fails
-            }
-        }
-
-        // Switch to Berserker Stance for DPS abilities
-        if (!me.Auras.Contains("Berserker Stance", false) && Api.Spellbook.CanCast("Berserker Rage") && unitsTargetingMe >= 2 && !Api.Spellbook.OnCooldown("Berserker Rage"))
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Switching to Berserker Stance for DPS");
-            Console.ResetColor();
-            if (Api.Spellbook.Cast("Berserker Stance"))
-                return true;
-        }
-
-        if ((me.Auras.Contains("Battle Stance", false) || me.Auras.Contains("Berserker Stance", false)) && Api.Spellbook.CanCast("Execute") && targethealth <= 20 && !Api.Spellbook.OnCooldown("Execute") && rage > 15)
+        if (me.Auras.Contains("Battle Stance", false) && Api.Spellbook.CanCast("Execute") && targethealth <= 20 && !Api.Spellbook.OnCooldown("Execute") && rage > 15)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Casting Execute");

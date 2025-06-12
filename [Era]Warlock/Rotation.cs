@@ -56,8 +56,8 @@ public class EraWarlock : Rotation
         // The simplest calculation for optimal ticks (to avoid key spam and false attempts)
 
         // Assuming wShadow is an instance of some class containing UnitRatings property
-        SlowTick = 750;
-        FastTick = 350;
+        SlowTick = 850;
+        FastTick = 550;
 
         // You can also use this method to add to various action lists.
 
@@ -312,42 +312,36 @@ public class EraWarlock : Rotation
             }
         }
         // Improved Assist Pet Logic
-        if (target == null)
+        if (pet.IsPetInCombat() && target.IsDead()  )
         {
-            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Player is in combat and has no valid target. Assisting pet...");
-                Console.ResetColor();
-                lastAssistPetLogTime = DateTime.Now;
-            }
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Pet is in combat and player has no valid target. Attempting to use AssistPet macro.");
+            Console.ResetColor();
 
             if (Api.UseMacro("AssistPet"))
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Successfully assisted pet.");
+                Console.WriteLine("AssistPet macro used successfully.");
                 Console.ResetColor();
-                assistedPet = true; // Set the flag to true after assisting the pet
+                assistedPet = true;
                 return true;
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Failed to assist pet.");
+                Console.WriteLine("AssistPet macro failed.");
                 Console.ResetColor();
             }
         }
         else if (target != null && !target.IsDead())
         {
-            if ((DateTime.Now - lastAssistPetLogTime).TotalSeconds >= 3)
+            if (assistedPet)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Player has a valid target, resetting assistedPet flag.");
+                Console.WriteLine("Player has a valid target. Resetting assistedPet flag.");
                 Console.ResetColor();
-                lastAssistPetLogTime = DateTime.Now;
             }
-
-            assistedPet = false; // Reset the flag when the player has a valid target
+            assistedPet = false;
         }
 
 
